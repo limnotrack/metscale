@@ -1,0 +1,53 @@
+Package: climprep
+Title: Climate and Meteorological Forcing: Extraction, Bias Correction
+    and Temporal Disaggregation
+Version: 0.1.0
+Authors@R:
+    person("Tadhg", "Moore", , "tadhg@limnotrack.com", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0002-3834-8868"))
+Description: Prepare model-ready meteorological forcing from gridded
+    reanalysis and climate projections. Extract hourly meteorology from
+    reanalysis netCDF (ERA5-Land) at a point or averaged over a polygon,
+    convert to standard units and a chosen time zone, bias-correct against
+    locally measured observations (monthly scaling, variance scaling,
+    linear regression, empirical or trend-preserving quantile mapping,
+    with leave-one-year-out cross-validation), and temporally disaggregate
+    daily meteorology (including climate-scenario series) to hourly or
+    3-hourly using an analogue-day method of fragments or a mean diurnal
+    cycle. Works standalone; integrates with the Aquatic Ecosystem Model
+    Ensemble ('AEME') when installed, but is not tied to any process
+    model.
+License: GPL (>= 3)
+URL: https://limnotrack.com/climprep/, https://github.com/limnotrack/climprep
+BugReports: https://github.com/limnotrack/climprep/issues
+Depends:
+    R (>= 4.1.0)
+Imports:
+    cli,
+    dplyr,
+    graphics,
+    grDevices,
+    ncdf4,
+    stats,
+    utils
+Suggests:
+    AEME,
+    ecmwfr,
+    httr2,
+    jsonlite,
+    knitr,
+    lubridate,
+    MASS,
+    rmarkdown,
+    sf,
+    stars,
+    terra,
+    testthat (>= 3.0.0)
+VignetteBuilder:
+    knitr
+Config/testthat/edition: 3
+Encoding: UTF-8
+LazyData: true
+Roxygen: list(markdown = TRUE)
+Config/roxygen2/version: 8.0.0
+RoxygenNote: 7.3.2
