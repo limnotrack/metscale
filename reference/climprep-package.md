@@ -1,0 +1,35 @@
+# climprep: Climate and Meteorological Forcing: Extraction, Bias Correction and Temporal Disaggregation
+
+Prepare model-ready meteorological forcing from gridded reanalysis and
+climate projections. Extract hourly meteorology from reanalysis netCDF
+(ERA5-Land) at a point or averaged over a polygon, convert to standard
+units and a chosen time zone, bias-correct against locally measured
+observations (monthly scaling, variance scaling, linear regression,
+empirical or trend-preserving quantile mapping, with leave-one-year-out
+cross-validation), and temporally disaggregate daily meteorology
+(including climate-scenario series) to hourly or 3-hourly using an
+analogue-day method of fragments or a mean diurnal cycle. Works
+standalone; integrates with the Aquatic Ecosystem Model Ensemble
+('AEME') when installed, but is not tied to any process model.
+
+## See also
+
+Useful links:
+
+- <https://limnotrack.com/climprep/>
+
+- <https://github.com/limnotrack/climprep>
+
+- <http://limnotrack.com/climprep/>
+
+- Report bugs at <https://github.com/limnotrack/climprep/issues>
+
+## Author
+
+**Maintainer**: Tadhg Moore <tadhg@limnotrack.com>
+([ORCID](https://orcid.org/0000-0002-3834-8868))
+
+Authors:
+
+- Tadhg Moore <tadhg@limnotrack.com>
+  ([ORCID](https://orcid.org/0000-0002-3834-8868))
