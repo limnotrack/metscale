@@ -13,6 +13,7 @@ Useful links:
 \itemize{
   \item \url{https://limnotrack.com/climprep/}
   \item \url{https://github.com/limnotrack/climprep}
+  \item \url{http://limnotrack.com/climprep/}
   \item Report bugs at \url{https://github.com/limnotrack/climprep/issues}
 }
 
