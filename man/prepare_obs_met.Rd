@@ -14,6 +14,8 @@ prepare_obs_met(
   interval = c("ending", "beginning"),
   derive = TRUE,
   convert_units = TRUE,
+  wind_height = NULL,
+  wind_z0 = 2e-04,
   station = NA_character_,
   verbose = TRUE
 )
@@ -58,6 +60,14 @@ temperature, where the inputs are present.}
 
 \item{convert_units}{if \code{TRUE} (default) auto-detect and fix common unit
 mistakes (K->degC, hPa->Pa, RH 0-1 -> \%, km/h->m/s, mm->... ).}
+
+\item{wind_height}{measurement height of the wind sensor, m. When given
+and not already 10, the wind columns are rescaled to 10 m (the ERA5 /
+lake-model convention) with \code{\link[=met_wind_at_height]{met_wind_at_height()}} - a buoy anemometer
+at 2 m needs \code{wind_height = 2}. \code{NULL} (default) leaves wind untouched.}
+
+\item{wind_z0}{roughness length (m) for that adjustment; default \code{2e-4}
+(open water). See \code{\link[=wind_at_height]{wind_at_height()}}.}
 
 \item{station}{optional label stored on the result (\code{"buoy"},
 \code{"shore"}, station id) - carried into the bias-correction metadata.}

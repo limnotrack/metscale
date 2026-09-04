@@ -22,6 +22,7 @@ does not require it.
 | Download ERA5 forcing: global daily point series (ISIMIP3a, no key), hourly GRIB from the Copernicus Data Store, or aggregate downloaded netCDF to daily | `download_era5_isimip_point()`, `download_era5_cds()` / `read_era5_grib_point()`, `convert_era5_netcdf()` |
 | Extract hourly ERA5-Land at a point or averaged over a lake polygon, in standard units and time zone | `extract_era5_hourly_met()`, `extract_era5_lake_met()` |
 | Standardise a table of measured meteorology (names, units, timezone, resampling) | `prepare_obs_met()`, `standardise_met()`, `guess_met_vars()` |
+| Translate a met table between the AEME `MET_*` scheme and CF / CMIP short names and units (`tas`, `pr`, `sfcWind`, …) | `met_to_cf()`, `cf_to_met()` |
 | Fit a bias correction ERA5 -> observations (monthly scaling, variance scaling, regression, empirical / trend-preserving quantile mapping) with leave-one-year-out cross-validation | `fit_met_bias_correction()` |
 | Apply it to the full record and aggregate to daily | `apply_met_bias_correction()`, `met_to_daily()` |
 | Build a bias-corrected daily baseline for a climate-scenario (delta-change) workflow | `bias_correct_daily_baseline()`, `?scenario_workflow` |
@@ -29,6 +30,7 @@ does not require it.
 | Disaggregate daily meteorology to hourly / 3-hourly (method of fragments or mean diurnal cycle) | `disaggregate_met_to_hourly()`, `build_diurnal_climatology()` |
 | Fill a minimal met set out to everything a lake model needs | `expand_met()` |
 | Solar geometry, clear-sky shortwave, hourly shortwave from daily | `solar_zenith_angle()`, `clear_sky_swr()`, `estimate_hourly_swr()` |
+| Adjust wind speed between measurement heights (e.g. a 2 m buoy anemometer to the 10 m reanalysis / lake-model convention) | `wind_at_height()`, `met_wind_at_height()` |
 | Humidity, wind-vector, pressure and longwave conversions | `rh_to_dewpoint()`, `uv2ds()` / `ds2uv()`, `station_pressure()`, `calc_in_lwr()`, `calc_humidity_vars()`, `calc_cc()` |
 
 ## Standard variables
@@ -43,6 +45,11 @@ timestep.
 The default time zone `"Etc/GMT-12"` is fixed NZST (UTC+12, no daylight
 saving), which keeps a gap-free regular sub-daily series; pass any other
 zone via the `tz` argument.
+
+`met_to_cf()` maps this scheme onto the CF / CMIP short names and units
+(`MET_tmpair` degC → `tas` K, `MET_pprain` mm/step → `pr` kg m-2 s-1,
+`MET_wndspd` → `sfcWind`, `MET_radswd` → `rsds`, …) for handing data to
+tools that expect that vocabulary; `cf_to_met()` is the inverse.
 
 ## Relationship to AEME
 
@@ -66,28 +73,39 @@ the way across:
 
 ## Example
 
+Runs on the bundled Lake Rotorua sample data (three years of hourly
+ERA5-Land, the matching buoy record, and daily CMIP6 / CCAM projections).
+
 ```r
 library(climprep)
+ex <- system.file("extdata", package = "climprep")
 
-lakes <- readRDS("lernzmp_lakes_master.rds")
+era5 <- read.csv(file.path(ex, "rotorua_era5_hourly_met.csv.gz"), check.names = FALSE)
+era5$Date <- as.POSIXct(era5$Date, tz = "Etc/GMT-12")
+obs  <- prepare_obs_met(file.path(ex, "rotorua_buoy_met_aeme_hr.csv.gz"),
+                        resample = "hour", tz = "Etc/GMT-12",
+                        wind_height = 2)   # buoy anemometer at 2 m -> 10 m
 
-## 1. hourly ERA5-Land for a lake, area-weighted over every overlapping cell
-era5 <- extract_era5_lake_met("LID 11133", path = "era5_netcdf",
-                              lakes = lakes, method = "area", years = 1980:2024)
-
-## 2. bias-correct against a buoy record
-obs <- prepare_obs_met("rotorua_buoy_met.csv", resample = "hour",
-                       col_map = c(MET_tmpair = "AirTemp", MET_wndspd = "WindSpeed",
-                                   MET_radswd = "ShortWave", MET_humrel = "RelHum"))
-bc  <- fit_met_bias_correction(era5, obs)          # leave-one-year-out CV
+## 1. bias-correct ERA5 against the buoy, apply, aggregate to daily
+bc        <- fit_met_bias_correction(era5, obs)   # leave-one-year-out CV
 bc$skill
-
 corrected <- apply_met_bias_correction(era5, bc)
 daily     <- met_to_daily(corrected)
 
-## 3. or disaggregate a daily series back to hourly for a sub-daily model
-hourly <- disaggregate_met_to_hourly(daily, donor = era5, method = "fragments")
+## 2. daily CMIP6 projections at the lake (input to the delta-change baseline)
+cmip <- extract_cmip6_point(file.path(ex, "rotorua_cmip6"),
+                            lon = 176.2717, lat = -38.0790)
+
+## 3. disaggregate a daily series back to hourly for a sub-daily model
+hourly <- disaggregate_met_to_hourly(daily, donor = corrected, method = "fragments",
+                                     lon = 176.2717, lat = -38.0790)
+
+## 4. hand off in CF / CMIP names and units: tas [K], pr [kg m-2 s-1], ...
+cf <- met_to_cf(hourly)
 ```
+
+The full bias-correction → delta-change → disaggregation workflow is walked
+through in `vignette("scenario-workflow")`.
 
 ## Installation
 

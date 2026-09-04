@@ -48,11 +48,15 @@ steps are identical.
 
 ## 1. Bias-correct hourly ERA5 against the buoy
 
+The buoy anemometer sits at 2 m; `wind_height = 2` rescales it to the 10 m
+convention (neutral log profile) so it is comparable with ERA5 before the
+bias correction is fitted.
+
 
 ``` r
 obs <- prepare_obs_met(file.path(ex, "rotorua_buoy_met_aeme_hr.csv.gz"),
                        resample = "hour", tz = TZ, station = "rotorua_buoy",
-                       verbose = FALSE)
+                       wind_height = 2, verbose = FALSE)
 
 era5 <- read.csv(file.path(ex, "rotorua_era5_hourly_met.csv.gz"),
                  check.names = FALSE)
@@ -74,8 +78,8 @@ bc$skill[bc$skill$stage %in% c("cv_raw", "cv_corrected"), ]
 #> 4  MET_tmpair cv_corrected 13040     0.0726    1.5546    1.9684 0.9203 0.7845
 #> 7  MET_tmpdew       cv_raw 12877    -1.3088    1.6958    2.1225 0.9204 0.8381
 #> 8  MET_tmpdew cv_corrected 12877     0.0279    1.2088    1.6592 0.9245 0.9216
-#> 11 MET_wndspd       cv_raw 13030    -2.4271    2.5439    3.0741 0.5865 0.1642
-#> 12 MET_wndspd cv_corrected 13030     0.0296    1.7290    2.1831 0.5903 0.5832
+#> 11 MET_wndspd       cv_raw 13030    -3.2290    3.3061    3.9336 0.5865 0.0740
+#> 12 MET_wndspd cv_corrected 13030     0.0348    2.0311    2.5646 0.5903 0.5832
 #> 15 MET_radswd       cv_raw 11221    11.2662   72.3798  124.0187 0.8788 0.8652
 #> 16 MET_radswd cv_corrected 11221    -4.2007   68.9717  118.1909 0.8851 0.8769
 #> 19 MET_humrel       cv_raw 12877    10.6182   13.3239   15.5025 0.7248 0.4139

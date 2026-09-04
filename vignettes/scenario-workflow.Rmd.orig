@@ -56,10 +56,14 @@ steps are identical.
 
 ## 1. Bias-correct hourly ERA5 against the buoy
 
+The buoy anemometer sits at 2 m; `wind_height = 2` rescales it to the 10 m
+convention (neutral log profile) so it is comparable with ERA5 before the
+bias correction is fitted.
+
 ```{r bias-fit}
 obs <- prepare_obs_met(file.path(ex, "rotorua_buoy_met_aeme_hr.csv.gz"),
                        resample = "hour", tz = TZ, station = "rotorua_buoy",
-                       verbose = FALSE)
+                       wind_height = 2, verbose = FALSE)
 
 era5 <- read.csv(file.path(ex, "rotorua_era5_hourly_met.csv.gz"),
                  check.names = FALSE)

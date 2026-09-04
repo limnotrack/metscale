@@ -140,6 +140,108 @@ ds2uv <- function(d, s) {
   cbind(u = -s * sin(r), v = -s * cos(r))
 }
 
+#' Adjust wind speed from one measurement height to another
+#'
+#' Buoy and shore anemometers commonly sit 2--3 m above the surface, whereas
+#' reanalyses (ERA5, ERA5-Land) and the lake-model convention report wind at
+#' **10 m**. This rescales a wind-speed series to a different height,
+#' assuming a neutrally-stratified surface layer.
+#'
+#' \describe{
+#'   \item{`method = "log"`}{(default) the logarithmic wind profile,
+#'     `u(z) = (u* / kappa) log(z / z0)`, so
+#'     `u(to) = u(from) * log(to / z0) / log(from / z0)`. `z0` is the
+#'     aerodynamic roughness length; the default `2e-4` m is a typical
+#'     open-water value. `z0 = "charnock"` instead solves the
+#'     Charnock relation `z0 = a u*^2 / g` (with `a = 0.013`) iteratively, so
+#'     the adjustment grows with wind speed as a real sea/lake surface
+#'     roughens.}
+#'   \item{`method = "power"`}{the power law `u(to) = u(from) (to/from)^p`
+#'     with `p = exponent` (default `0.11`, the open-water value; use about
+#'     `1/7` over land).}
+#' }
+#' For 2 m -> 10 m over water all three give a factor of roughly 1.15--1.20.
+#' The neutral-stability assumption is good for the moderate-to-strong winds
+#' that matter for lake mixing; it over-corrects a little in very light,
+#' stable conditions.
+#'
+#' @param u wind speed at height `from`, m/s (vector).
+#' @param from measurement height of `u`, m.
+#' @param to target height, m (default 10).
+#' @param z0 roughness length in m for `method = "log"` (default `2e-4`), or
+#'   the string `"charnock"` for a wind-speed-dependent open-water roughness.
+#' @param method `"log"` (default) or `"power"`.
+#' @param exponent power-law exponent for `method = "power"` (default 0.11).
+#'
+#' @return wind speed at height `to`, m/s, same length as `u`.
+#' @seealso [met_wind_at_height()] to apply this to a `MET_*` data frame.
+#' @examples
+#' wind_at_height(5, from = 2)              # 2 m -> 10 m, ~5.9 m/s
+#' wind_at_height(c(2, 6, 12), from = 3, to = 10)
+#' wind_at_height(10, from = 2, z0 = "charnock")
+#' @export
+wind_at_height <- function(u, from, to = 10, z0 = 2e-4,
+                           method = c("log", "power"), exponent = 0.11) {
+  method <- match.arg(method)
+  stopifnot(length(from) == 1L, length(to) == 1L, from > 0, to > 0)
+  if (from == to) return(u)
+
+  if (method == "power")
+    return(u * (to / from)^exponent)
+
+  if (is.character(z0) && z0 == "charnock") {
+    kappa <- 0.41; g <- 9.81; a_ch <- 0.013
+    z0v <- rep(1e-4, length(u))
+    for (i in seq_len(25)) {
+      ustar <- abs(u) * kappa / log(from / z0v)
+      z0v   <- pmax(a_ch * ustar^2 / g, 1e-6)
+    }
+    return(u * log(to / z0v) / log(from / z0v))
+  }
+
+  z0 <- as.numeric(z0)
+  stopifnot(z0 > 0, from > z0, to > z0)
+  u * log(to / z0) / log(from / z0)
+}
+
+#' Adjust the wind columns of a met data frame to a new height
+#'
+#' Applies [wind_at_height()] to `MET_wndspd` and, when present, the
+#' components `MET_wnduvu` / `MET_wnduvv` (scaled by the same factor, so wind
+#' direction is unchanged). Use it to bring a 2 m buoy record onto the 10 m
+#' convention before [fit_met_bias_correction()].
+#'
+#' @param met data frame with `MET_wndspd` and/or `MET_wnduvu` +
+#'   `MET_wnduvv`.
+#' @param from measurement height of the wind columns, m.
+#' @param to,z0,method,exponent passed to [wind_at_height()].
+#'
+#' @return `met` with the wind columns rescaled, carrying
+#'   `attr(., "wind_height") <- to`.
+#' @seealso [wind_at_height()], [prepare_obs_met()] (which takes a
+#'   `wind_height` argument).
+#' @examples
+#' d <- data.frame(Date = Sys.time() + 0:3 * 3600,
+#'                 MET_wndspd = c(2, 4, 3, 5))
+#' met_wind_at_height(d, from = 2)
+#' @export
+met_wind_at_height <- function(met, from, to = 10, z0 = 2e-4,
+                               method = c("log", "power"), exponent = 0.11) {
+  method <- match.arg(method)
+  stopifnot(is.data.frame(met))
+  wc <- intersect(c("MET_wndspd", "MET_wnduvu", "MET_wnduvv"), names(met))
+  if (!length(wc)) stop("no MET_wndspd or MET_wnduvu/MET_wnduvv column.", call. = FALSE)
+
+  spd <- if ("MET_wndspd" %in% wc) met$MET_wndspd
+         else sqrt(met$MET_wnduvu^2 + met$MET_wnduvv^2)
+  adj <- wind_at_height(spd, from = from, to = to, z0 = z0,
+                        method = method, exponent = exponent)
+  fac <- ifelse(is.finite(spd) & spd > 0, adj / spd, 1)
+  for (v in wc) met[[v]] <- met[[v]] * fac
+  attr(met, "wind_height") <- to
+  met
+}
+
 # ---- pressure --------------------------------------------------------------
 
 #' Station pressure from elevation
