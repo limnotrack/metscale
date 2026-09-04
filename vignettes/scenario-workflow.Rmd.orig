@@ -32,14 +32,14 @@ done in the right order:
    baseline (never to the raw reanalysis, and never to the delta itself),
 3. **temporally disaggregate** the daily projection back to hourly.
 
-`climprep` covers steps 1 and 3 directly; step 2 is a few lines of arithmetic
+`metscale` covers steps 1 and 3 directly; step 2 is a few lines of arithmetic
 shown below. See `?scenario_workflow` for why the correction must come before
 the delta.
 
 ```{r setup}
-library(climprep)
+library(metscale)
 
-ex   <- system.file("extdata", package = "climprep")
+ex   <- system.file("extdata", package = "metscale")
 TZ   <- "Etc/GMT-12"          # fixed NZST (UTC+12)
 LON  <- 176.2717
 LAT  <- -38.0790

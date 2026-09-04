@@ -47,7 +47,7 @@ convert_era5_netcdf <- function(lat,
   }
 
   # Load Rdata
-  utils::data("era5_ref_table", package = "climprep", envir = environment())
+  utils::data("era5_ref_table", package = "metscale", envir = environment())
 
   coords <- data.frame(lat = lat, lon = lon)
   coords_sf <- sf::st_as_sf(coords, coords = c("lon", "lat"), crs = 4326)

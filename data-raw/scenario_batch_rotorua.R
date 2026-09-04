@@ -6,7 +6,7 @@
 ## on the *full* (non-bundled) source data and writes the complete
 ## 4-SSP x 2-window matrix of daily + hourly CSVs to data-raw/output/.
 ##
-## Point CLIMPREP_RAW_DATA at a directory holding:
+## Point METSCALE_RAW_DATA at a directory holding:
 ##   rotorua_era5_hourly_met_full.csv     hourly ERA5-Land
 ##   rotorua_buoy_met_aeme_hr_full.csv    hourly Rotorua buoy
 ##   rotorua_cmip6_full/                  the NIWA CCAM/CMIP6 daily .nc
@@ -22,7 +22,7 @@ suppressWarnings(suppressMessages({
   devtools::load_all(".", quiet = TRUE)
 }))
 
-src     <- Sys.getenv("CLIMPREP_RAW_DATA", "~/data/climprep-raw")
+src     <- Sys.getenv("METSCALE_RAW_DATA", "~/data/metscale-raw")
 out_dir <- "data-raw/output"
 stopifnot(dir.exists(src))
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)

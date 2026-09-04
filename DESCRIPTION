@@ -1,4 +1,4 @@
-Package: climprep
+Package: metscale
 Title: Climate and Meteorological Forcing: Extraction, Bias Correction
     and Temporal Disaggregation
 Version: 0.1.0
@@ -18,8 +18,8 @@ Description: Prepare model-ready meteorological forcing from gridded
     Ensemble ('AEME') when installed, but is not tied to any process
     model.
 License: GPL (>= 3)
-URL: https://limnotrack.com/climprep/, https://github.com/limnotrack/climprep, http://limnotrack.com/climprep/
-BugReports: https://github.com/limnotrack/climprep/issues
+URL: https://limnotrack.com/metscale/, https://github.com/limnotrack/metscale, http://limnotrack.com/metscale/
+BugReports: https://github.com/limnotrack/metscale/issues
 Depends:
     R (>= 4.1.0)
 Imports:

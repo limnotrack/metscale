@@ -1,4 +1,8 @@
-url: http://limnotrack.com/climprep/
+url: http://limnotrack.com/metscale/
 template:
   bootstrap: 5
-
+  bootswatch: cosmo
+  bslib:
+    bg: "#FEF7EC"
+    fg: "#0065a9"
+    primary: "#0065a9"

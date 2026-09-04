@@ -1,6 +1,6 @@
-# climprep 0.1.0
+# metscale 0.1.0
 
-First release. `climprep` prepares model-ready meteorological forcing from
+First release. `metscale` prepares model-ready meteorological forcing from
 gridded reanalysis and climate projections: extract, bias-correct against
 local observations, apply a climate-scenario delta change, and temporally
 disaggregate to sub-daily. It works standalone and integrates with `AEME`

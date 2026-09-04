@@ -16,17 +16,17 @@ knitr::opts_chunk$set(
 ```
 
 ```{r setup}
-library(climprep)
+library(metscale)
 ```
 
-`climprep`'s bias-correction and disaggregation tools operate on a meteorology
+`metscale`'s bias-correction and disaggregation tools operate on a meteorology
 data frame. This vignette covers the three ways to *acquire* ERA5 forcing, from
 lightest to heaviest. Whichever you use, the output feeds into
 `standardise_met()`, `fit_met_bias_correction()` and
 `disaggregate_met_to_hourly()`.
 
 All three functions need suggested packages that are **not** installed with
-`climprep` by default:
+`metscale` by default:
 
 ```{r install-deps}
 install.packages(c("httr2", "jsonlite", "terra", "ecmwfr", "stars", "sf"))

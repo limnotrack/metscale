@@ -1,0 +1,12 @@
+^metscale\.Rproj$
+^\.Rproj\.user$
+^\.git$
+^\.github$
+^LICENSE\.md$
+^cran-comments\.md$
+^data-raw$
+^\.claude$
+^vignettes/.*\.Rmd\.orig$
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

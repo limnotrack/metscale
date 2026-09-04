@@ -68,5 +68,5 @@ AEME::input(aeme) <- inp
 }
 \seealso{
 \link{scenario_workflow} for the full delta-change pipeline and
-\code{vignette("scenario-workflow", package = "climprep")}.
+\code{vignette("scenario-workflow", package = "metscale")}.
 }

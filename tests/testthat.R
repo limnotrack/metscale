@@ -1,4 +1,4 @@
 library(testthat)
-library(climprep)
+library(metscale)
 
-test_check("climprep")
+test_check("metscale")

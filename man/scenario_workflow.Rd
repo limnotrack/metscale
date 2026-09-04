@@ -21,7 +21,7 @@ ERA5 hourly -> extract_era5_lake_met()
             -> disaggregate_met_to_hourly()        # if sub-daily is needed
 }
 
-See \code{vignette("scenario-workflow", package = "climprep")} for a
+See \code{vignette("scenario-workflow", package = "metscale")} for a
 runnable end-to-end example on Lake Rotorua.
 
 Applying the local correction to the baseline \emph{before} the delta-change

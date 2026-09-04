@@ -2,7 +2,7 @@
 ## Regenerate the slim example fixtures in inst/extdata/ from the full source
 ## data (which is NOT in the repo).
 ##
-## Point CLIMPREP_RAW_DATA at a directory holding:
+## Point METSCALE_RAW_DATA at a directory holding:
 ##   rotorua_era5_hourly_met_full.csv     (hourly ERA5-Land, 1968-2025)
 ##   rotorua_buoy_met_aeme_hr_full.csv    (hourly Rotorua buoy, 2022-2026)
 ##   rotorua_cmip6_full/                  (25 NIWA CCAM/CMIP6 daily .nc)
@@ -18,11 +18,11 @@
 ## ===========================================================================
 
 suppressWarnings(suppressMessages({
-  devtools::load_all(".", quiet = TRUE)   # for climprep:::.cmip6_time_to_date + extract_cmip6_point
+  devtools::load_all(".", quiet = TRUE)   # for metscale:::.cmip6_time_to_date + extract_cmip6_point
   library(ncdf4)
 }))
 
-src     <- Sys.getenv("CLIMPREP_RAW_DATA", "~/data/climprep-raw")
+src     <- Sys.getenv("METSCALE_RAW_DATA", "~/data/metscale-raw")
 out_ex  <- "inst/extdata"
 out_nc  <- file.path(out_ex, "rotorua_cmip6")
 stopifnot(dir.exists(src))
@@ -96,7 +96,7 @@ crop_one <- function(fin, fout, years) {
   iy  <- pmin(pmax(iy0 + (-GRID_HALF:GRID_HALF), 1L), length(lat))
   ix  <- unique(ix); iy <- unique(iy)
 
-  dts <- climprep:::.cmip6_time_to_date(tv, tu, cal)
+  dts <- metscale:::.cmip6_time_to_date(tv, tu, cal)
   it  <- which(as.integer(format(dts, "%Y")) %in% years)
   if (!length(it)) stop("no time steps in ", paste(range(years), collapse = "-"),
                         " for ", basename(fin))
