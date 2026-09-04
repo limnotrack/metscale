@@ -33,6 +33,7 @@ Imports:
 Suggests:
     AEME (>= 0.4.0),
     ecmwfr,
+    ggplot2,
     httr2,
     jsonlite,
     knitr,
