@@ -47,7 +47,7 @@ disaggregate_met_to_hourly(
 
   hourly data frame with `Date` (POSIXct) and `MET_*` columns for the
   same location, e.g. from
-  [`extract_era5_lake_met()`](http://limnotrack.com/climprep/reference/extract_era5_lake_met.md).
+  [`extract_era5_lake_met()`](http://limnotrack.com/metscale/reference/extract_era5_lake_met.md).
   A longer donor record gives a better analogue pool.
 
 - method:
@@ -67,10 +67,10 @@ disaggregate_met_to_hourly(
 - interval:
 
   what a timestamp denotes, passed to
-  [`estimate_hourly_swr()`](http://limnotrack.com/climprep/reference/estimate_hourly_swr.md).
+  [`estimate_hourly_swr()`](http://limnotrack.com/metscale/reference/estimate_hourly_swr.md).
   Default `"ending"`, matching the accumulated flux convention of ERA5
   and of
-  [`extract_era5_hourly_met()`](http://limnotrack.com/climprep/reference/extract_era5_hourly_met.md).
+  [`extract_era5_hourly_met()`](http://limnotrack.com/metscale/reference/extract_era5_hourly_met.md).
 
 - lat, lon:
 
@@ -116,7 +116,7 @@ disaggregate_met_to_hourly(
 - expand:
 
   run
-  [`expand_met()`](http://limnotrack.com/climprep/reference/expand_met.md)
+  [`expand_met()`](http://limnotrack.com/metscale/reference/expand_met.md)
   on the result to regenerate the dependent variables at the new
   timestep.
 
@@ -148,13 +148,13 @@ Two ways of borrowing the structure:
 - `"diurnal"`:
 
   a deterministic month-by-hour mean diurnal cycle from
-  [`build_diurnal_climatology()`](http://limnotrack.com/climprep/reference/build_diurnal_climatology.md).
+  [`build_diurnal_climatology()`](http://limnotrack.com/metscale/reference/build_diurnal_climatology.md).
   Smoother and reproducible, but every day of a given month gets the
   same shape.
 
 Shortwave radiation is handled separately and by default comes from
 solar geometry
-([`estimate_hourly_swr()`](http://limnotrack.com/climprep/reference/estimate_hourly_swr.md)),
+([`estimate_hourly_swr()`](http://limnotrack.com/metscale/reference/estimate_hourly_swr.md)),
 which guarantees a single-peaked curve, true night-time zeros and a peak
 at local solar noon. Rainfall in `"fragments"` mode borrows its shape
 from a *wet* donor day, chosen by closeness of daily total, so that
@@ -168,9 +168,9 @@ daily mean - it is recomputed from the disaggregated `MET_wnduvu` /
 
 ## See also
 
-[`build_diurnal_climatology()`](http://limnotrack.com/climprep/reference/build_diurnal_climatology.md),
-[`estimate_hourly_swr()`](http://limnotrack.com/climprep/reference/estimate_hourly_swr.md),
-[`met_to_daily()`](http://limnotrack.com/climprep/reference/met_to_daily.md)
+[`build_diurnal_climatology()`](http://limnotrack.com/metscale/reference/build_diurnal_climatology.md),
+[`estimate_hourly_swr()`](http://limnotrack.com/metscale/reference/estimate_hourly_swr.md),
+[`met_to_daily()`](http://limnotrack.com/metscale/reference/met_to_daily.md)
 for the reverse operation.
 
 ## Examples

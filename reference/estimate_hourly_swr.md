@@ -44,7 +44,7 @@ estimate_hourly_swr(
   what a timestamp denotes: `"ending"` (default) means the value is the
   mean over the interval *ending* at that label, which is the convention
   of ERA5 accumulated fluxes and hence of
-  [`extract_era5_hourly_met()`](http://limnotrack.com/climprep/reference/extract_era5_hourly_met.md);
+  [`extract_era5_hourly_met()`](http://limnotrack.com/metscale/reference/extract_era5_hourly_met.md);
   `"beginning"` is the mean over the following interval; `"instant"` is
   the instantaneous value at the label. Averaging over an interval is
   done on a 10-minute sub-grid, so sunrise and sunset steps are handled

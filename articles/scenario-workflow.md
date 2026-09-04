@@ -9,16 +9,16 @@ things done in the right order:
     itself),
 3.  **temporally disaggregate** the daily projection back to hourly.
 
-`climprep` covers steps 1 and 3 directly; step 2 is a few lines of
+`metscale` covers steps 1 and 3 directly; step 2 is a few lines of
 arithmetic shown below. See
-[`?scenario_workflow`](http://limnotrack.com/climprep/reference/scenario_workflow.md)
+[`?scenario_workflow`](http://limnotrack.com/metscale/reference/scenario_workflow.md)
 for why the correction must come before the delta.
 
 ``` r
 
-library(climprep)
+library(metscale)
 
-ex   <- system.file("extdata", package = "climprep")
+ex   <- system.file("extdata", package = "metscale")
 TZ   <- "Etc/GMT-12"          # fixed NZST (UTC+12)
 LON  <- 176.2717
 LAT  <- -38.0790
@@ -151,7 +151,7 @@ range(baseline$Date)
 ## 3. CMIP6 delta-change on the corrected baseline
 
 Read the model series at the lake with
-[`extract_cmip6_point()`](http://limnotrack.com/climprep/reference/extract_cmip6_point.md)
+[`extract_cmip6_point()`](http://limnotrack.com/metscale/reference/extract_cmip6_point.md)
 — it decodes the 365-day model calendar, samples bilinearly, and returns
 AEME `MET_*` names and units.
 
@@ -263,7 +263,7 @@ par(op)
 
 ## 4. Disaggregate the projection to hourly
 
-[`disaggregate_met_to_hourly()`](http://limnotrack.com/climprep/reference/disaggregate_met_to_hourly.md)
+[`disaggregate_met_to_hourly()`](http://limnotrack.com/metscale/reference/disaggregate_met_to_hourly.md)
 borrows the within-day shape of the corrected ERA5 record (method of
 fragments) and rebuilds shortwave from solar geometry. Daily means and
 rainfall totals are conserved.
@@ -371,4 +371,4 @@ hold under a future climate. Use a long reanalysis record and 20-year
 climate windows, prefer `method = "scale"` over quantile mapping for the
 projected baseline, and treat the scenario spread (here `ssp245` vs
 `ssp585`) as the lower bound on uncertainty. See
-[`?scenario_workflow`](http://limnotrack.com/climprep/reference/scenario_workflow.md).
+[`?scenario_workflow`](http://limnotrack.com/metscale/reference/scenario_workflow.md).

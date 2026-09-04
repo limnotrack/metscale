@@ -1,10 +1,10 @@
 # Convert AEME `MET_*` meteorology to CF / CMIP variable names and units
 
 Renames the AEME `MET_*` columns
-([`met_vars()`](http://limnotrack.com/climprep/reference/met_vars.md))
+([`met_vars()`](http://limnotrack.com/metscale/reference/met_vars.md))
 to the short variable names used by CMIP6 / CORDEX and the CF
 conventions, and converts each to its CF-canonical unit.
-[`cf_to_met()`](http://limnotrack.com/climprep/reference/cf_to_met.md)
+[`cf_to_met()`](http://limnotrack.com/metscale/reference/cf_to_met.md)
 is the inverse.
 
 ## Usage
@@ -85,12 +85,12 @@ through untouched.
 
 ## See also
 
-[`cf_to_met()`](http://limnotrack.com/climprep/reference/cf_to_met.md)
+[`cf_to_met()`](http://limnotrack.com/metscale/reference/cf_to_met.md)
 for the inverse,
-[`met_vars()`](http://limnotrack.com/climprep/reference/met_vars.md),
-[`standardise_met()`](http://limnotrack.com/climprep/reference/standardise_met.md)
+[`met_vars()`](http://limnotrack.com/metscale/reference/met_vars.md),
+[`standardise_met()`](http://limnotrack.com/metscale/reference/standardise_met.md)
 and
-[`guess_met_vars()`](http://limnotrack.com/climprep/reference/guess_met_vars.md)
+[`guess_met_vars()`](http://limnotrack.com/metscale/reference/guess_met_vars.md)
 for bringing arbitrary names *to* `MET_*`.
 
 ## Examples

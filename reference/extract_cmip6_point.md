@@ -5,10 +5,10 @@ file, as produced by the NIWA CCAM downscaling of CMIP6 - samples them
 at a point, decodes the model calendar to real dates, and returns the
 series in AEME `MET_*` names and units. Built for the delta-change step
 of
-[scenario_workflow](http://limnotrack.com/climprep/reference/scenario_workflow.md):
+[scenario_workflow](http://limnotrack.com/metscale/reference/scenario_workflow.md):
 extract the model *historical* and *future* series with this function,
 form monthly change factors, and apply them to a
-[`bias_correct_daily_baseline()`](http://limnotrack.com/climprep/reference/bias_correct_daily_baseline.md).
+[`bias_correct_daily_baseline()`](http://limnotrack.com/metscale/reference/bias_correct_daily_baseline.md).
 
 ## Usage
 
@@ -92,9 +92,9 @@ is applied by ncdf4.
 
 ## See also
 
-[scenario_workflow](http://limnotrack.com/climprep/reference/scenario_workflow.md),
-[`bias_correct_daily_baseline()`](http://limnotrack.com/climprep/reference/bias_correct_daily_baseline.md),
-[`disaggregate_met_to_hourly()`](http://limnotrack.com/climprep/reference/disaggregate_met_to_hourly.md)
+[scenario_workflow](http://limnotrack.com/metscale/reference/scenario_workflow.md),
+[`bias_correct_daily_baseline()`](http://limnotrack.com/metscale/reference/bias_correct_daily_baseline.md),
+[`disaggregate_met_to_hourly()`](http://limnotrack.com/metscale/reference/disaggregate_met_to_hourly.md)
 
 ## Examples
 

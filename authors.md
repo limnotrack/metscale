@@ -8,16 +8,16 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/limnotrack/climprep/blob/main/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/limnotrack/metscale/blob/main/DESCRIPTION)
 
-Moore T (2026). *climprep: Climate and Meteorological Forcing:
+Moore T (2026). *metscale: Climate and Meteorological Forcing:
 Extraction, Bias Correction and Temporal Disaggregation*. R package
-version 0.1.0, <https://limnotrack.com/climprep/>.
+version 0.1.0, <https://limnotrack.com/metscale/>.
 
     @Manual{,
-      title = {climprep: Climate and Meteorological Forcing: Extraction, Bias Correction and Temporal Disaggregation},
+      title = {metscale: Climate and Meteorological Forcing: Extraction, Bias Correction and Temporal Disaggregation},
       author = {Tadhg Moore},
       year = {2026},
       note = {R package version 0.1.0},
-      url = {https://limnotrack.com/climprep/},
+      url = {https://limnotrack.com/metscale/},
     }

@@ -3,7 +3,7 @@
 Reads monthly hourly ERA5-Land netCDF files from `path`, pulls a time
 series for a location, de-accumulates the flux variables, converts
 everything to standard lake-model units
-([`met_vars()`](http://limnotrack.com/climprep/reference/met_vars.md)),
+([`met_vars()`](http://limnotrack.com/metscale/reference/met_vars.md)),
 shifts the time stamps from UTC to `tz` and returns a tidy wide data
 frame ready to be written to CSV.
 

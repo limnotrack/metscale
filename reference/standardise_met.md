@@ -1,7 +1,7 @@
 # Standardise meteorological names and units
 
 Renames columns to the standard `MET_*` names with
-[`guess_met_vars()`](http://limnotrack.com/climprep/reference/guess_met_vars.md),
+[`guess_met_vars()`](http://limnotrack.com/metscale/reference/guess_met_vars.md),
 then detects and corrects common unit mistakes from the value ranges:
 Kelvin to degC, hPa to Pa, humidity fraction to percent, oktas to
 fraction, km/h to m/s, metres to millimetres, and MJ or kJ m-2 day-1 to

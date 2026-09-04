@@ -1,17 +1,17 @@
 # Apply a fitted ERA5 met bias correction to a full record
 
 Takes the object from
-[`fit_met_bias_correction()`](http://limnotrack.com/climprep/reference/fit_met_bias_correction.md)
+[`fit_met_bias_correction()`](http://limnotrack.com/metscale/reference/fit_met_bias_correction.md)
 and applies it to any ERA5 met frame from
-[`extract_era5_hourly_met()`](http://limnotrack.com/climprep/reference/extract_era5_hourly_met.md)
+[`extract_era5_hourly_met()`](http://limnotrack.com/metscale/reference/extract_era5_hourly_met.md)
 /
-[`extract_era5_lake_met()`](http://limnotrack.com/climprep/reference/extract_era5_lake_met.md) -
+[`extract_era5_lake_met()`](http://limnotrack.com/metscale/reference/extract_era5_lake_met.md) -
 typically the full record, not just the training window. Each corrected
 variable is clamped back to physical bounds. Optionally the corrected
 primaries are expanded so the dependent variables (dew point, vapour
 pressure, cloud cover, longwave, u/v wind, station pressure) are
 regenerated consistently with
-[`expand_met()`](http://limnotrack.com/climprep/reference/expand_met.md).
+[`expand_met()`](http://limnotrack.com/metscale/reference/expand_met.md).
 
 ## Usage
 
@@ -40,7 +40,7 @@ apply_met_bias_correction(
 - bc:
 
   a `met_biascorr` object from
-  [`fit_met_bias_correction()`](http://limnotrack.com/climprep/reference/fit_met_bias_correction.md).
+  [`fit_met_bias_correction()`](http://limnotrack.com/metscale/reference/fit_met_bias_correction.md).
 
 - vars:
 
@@ -61,7 +61,7 @@ apply_met_bias_correction(
 - expand:
 
   if `TRUE`, keep `Date` + corrected primaries and call
-  [`expand_met()`](http://limnotrack.com/climprep/reference/expand_met.md)
+  [`expand_met()`](http://limnotrack.com/metscale/reference/expand_met.md)
   to rebuild the full set. Needs `lat`/`lon`/`elev` (taken from
   `attr(era5, "lat")` / `"lon"` when `NULL`).
 
@@ -72,7 +72,7 @@ apply_met_bias_correction(
 - tz:
 
   timezone for the solar geometry in
-  [`expand_met()`](http://limnotrack.com/climprep/reference/expand_met.md);
+  [`expand_met()`](http://limnotrack.com/metscale/reference/expand_met.md);
   defaults to the `tz` attribute of `era5`, else `"Etc/GMT-12"`.
 
 - verbose:
@@ -84,11 +84,11 @@ apply_met_bias_correction(
 `era5` with corrected columns (same class/attributes), plus
 `attr(., "biascorr")` recording the training window and methods. When
 `expand = TRUE`, the
-[`expand_met()`](http://limnotrack.com/climprep/reference/expand_met.md)
+[`expand_met()`](http://limnotrack.com/metscale/reference/expand_met.md)
 output frame.
 
 ## See also
 
-[`fit_met_bias_correction()`](http://limnotrack.com/climprep/reference/fit_met_bias_correction.md),
-[`met_to_daily()`](http://limnotrack.com/climprep/reference/met_to_daily.md),
-[`expand_met()`](http://limnotrack.com/climprep/reference/expand_met.md)
+[`fit_met_bias_correction()`](http://limnotrack.com/metscale/reference/fit_met_bias_correction.md),
+[`met_to_daily()`](http://limnotrack.com/metscale/reference/met_to_daily.md),
+[`expand_met()`](http://limnotrack.com/metscale/reference/expand_met.md)

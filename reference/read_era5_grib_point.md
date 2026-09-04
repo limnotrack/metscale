@@ -2,7 +2,7 @@
 
 Extract a time series at a point (or the weighted mean over a polygon)
 from one or more GRIB files downloaded with
-[`download_era5_cds()`](http://limnotrack.com/climprep/reference/download_era5_cds.md).
+[`download_era5_cds()`](http://limnotrack.com/metscale/reference/download_era5_cds.md).
 
 ## Usage
 
@@ -46,7 +46,7 @@ Requires the suggested package terra (and sf when `shape` is supplied).
 
 ## See also
 
-[`download_era5_cds()`](http://limnotrack.com/climprep/reference/download_era5_cds.md)
+[`download_era5_cds()`](http://limnotrack.com/metscale/reference/download_era5_cds.md)
 
 ## Examples
 

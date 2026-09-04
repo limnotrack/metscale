@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Climate and Meteorological Forcing: Extraction, Bias Correction and Temporal Disaggregation • climprep</title>
+<title>Climate and Meteorological Forcing: Extraction, Bias Correction and Temporal Disaggregation • metscale</title>
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
@@ -18,9 +18,9 @@
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top bg-primary" data-bs-theme="dark" aria-label="Site navigation"><div class="container">
 
-    <a class="navbar-brand me-2" href="index.html">climprep</a>
+    <a class="navbar-brand me-2" href="index.html">metscale</a>
 
     <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
 
@@ -45,7 +45,7 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="search.json">
 </form></li>
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/limnotrack/climprep/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/limnotrack/metscale/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
       </ul>
 </div>
 
@@ -54,11 +54,11 @@
 </nav><div class="container template-home">
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
-<div class="page-header"><h1 id="climprep">climprep<a class="anchor" aria-label="anchor" href="#climprep"></a>
+<div class="page-header"><h1 id="metscale">metscale<a class="anchor" aria-label="anchor" href="#metscale"></a>
 </h1></div>
 <!-- badges: start -->
 
-<p>Model-ready meteorological forcing from gridded reanalysis and climate projections, bias-corrected against local observations and temporally disaggregated. <code>climprep</code> covers the meteorological side of process-model forcing without depending on any model: extract, correct, disaggregate, and a set of clean meteorological conversions. It integrates with the Aquatic Ecosystem Model Ensemble (<a href="https://github.com/limnotrack/AEME" class="external-link"><code>AEME</code></a>) when that is installed, but does not require it.</p>
+<p>Model-ready meteorological forcing from gridded reanalysis and climate projections, bias-corrected against local observations and temporally disaggregated. <code>metscale</code> covers the meteorological side of process-model forcing without depending on any model: extract, correct, disaggregate, and a set of clean meteorological conversions. It integrates with the Aquatic Ecosystem Model Ensemble (<a href="https://github.com/limnotrack/AEME" class="external-link"><code>AEME</code></a>) when that is installed, but does not require it.</p>
 <div class="section level2">
 <h2 id="what-it-does">What it does<a class="anchor" aria-label="anchor" href="#what-it-does"></a>
 </h2>
@@ -157,7 +157,7 @@
 <div class="section level2">
 <h2 id="relationship-to-aeme">Relationship to AEME<a class="anchor" aria-label="anchor" href="#relationship-to-aeme"></a>
 </h2>
-<p><code>climprep</code> holds the canonical implementation of the meteorology helpers that previously lived inside <code>AEME</code> (<code>expand_met</code>, <code>standardise_met</code>, <code>calc_cc</code>, <code>calc_in_lwr</code>, <code>calc_swr</code> / <code>estimate_hourly_swr</code>, the humidity, wind and pressure conversions). Three long-standing defects were fixed on the way across:</p>
+<p><code>metscale</code> holds the canonical implementation of the meteorology helpers that previously lived inside <code>AEME</code> (<code>expand_met</code>, <code>standardise_met</code>, <code>calc_cc</code>, <code>calc_in_lwr</code>, <code>calc_swr</code> / <code>estimate_hourly_swr</code>, the humidity, wind and pressure conversions). Three long-standing defects were fixed on the way across:</p>
 <ul>
 <li>
 <strong>Time zone.</strong> <code><a href="reference/expand_met.html">expand_met()</a></code> / <code><a href="reference/calc_cc.html">calc_cc()</a></code> / <code><a href="reference/estimate_hourly_swr.html">estimate_hourly_swr()</a></code> take an explicit <code>tz</code>. The <code>AEME</code> versions force the session time zone to UTC and read the wall clock, which shifts the solar-geometry curve by the UTC offset (12 h for New Zealand) whenever the input is a local POSIXct.</li>
@@ -172,8 +172,8 @@
 </h2>
 <p>Runs on the bundled Lake Rotorua sample data (three years of hourly ERA5-Land, the matching buoy record, and daily CMIP6 / CCAM projections).</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://limnotrack.com/climprep/" class="external-link">climprep</a></span><span class="op">)</span></span>
-<span><span class="va">ex</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, package <span class="op">=</span> <span class="st">"climprep"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://limnotrack.com/metscale/" class="external-link">metscale</a></span><span class="op">)</span></span>
+<span><span class="va">ex</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, package <span class="op">=</span> <span class="st">"metscale"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">era5</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html" class="external-link">read.csv</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ex</span>, <span class="st">"rotorua_era5_hourly_met.csv.gz"</span><span class="op">)</span>, check.names <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="va">era5</span><span class="op">$</span><span class="va">Date</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.POSIXlt.html" class="external-link">as.POSIXct</a></span><span class="op">(</span><span class="va">era5</span><span class="op">$</span><span class="va">Date</span>, tz <span class="op">=</span> <span class="st">"Etc/GMT-12"</span><span class="op">)</span></span>
@@ -204,14 +204,14 @@
 </h2>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
-<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"limnotrack/climprep"</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"limnotrack/metscale"</span><span class="op">)</span></span></code></pre></div>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
-<li><a href="https://github.com/limnotrack/climprep/" class="external-link">Browse source code</a></li>
-<li><a href="https://github.com/limnotrack/climprep/issues" class="external-link">Report a bug</a></li>
+<li><a href="https://github.com/limnotrack/metscale/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/limnotrack/metscale/issues" class="external-link">Report a bug</a></li>
 </ul>
 </div>
 
@@ -226,7 +226,7 @@
 <div class="citation">
 <h2 data-toc-skip>Citation</h2>
 <ul class="list-unstyled">
-<li><a href="authors.html#citation">Citing climprep</a></li>
+<li><a href="authors.html#citation">Citing metscale</a></li>
 </ul>
 </div>
 
@@ -240,7 +240,7 @@
 <div class="dev-status">
 <h2 data-toc-skip>Dev status</h2>
 <ul class="list-unstyled">
-<li><a href="https://github.com/limnotrack/climprep/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/limnotrack/climprep/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a></li>
+<li><a href="https://github.com/limnotrack/metscale/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/limnotrack/metscale/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a></li>
 <li><a href="https://lifecycle.r-lib.org/articles/stages.html#experimental" class="external-link"><img src="https://img.shields.io/badge/lifecycle-experimental-orange.svg" alt="Lifecycle: experimental"></a></li>
 </ul>
 </div>

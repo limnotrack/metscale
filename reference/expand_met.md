@@ -3,9 +3,9 @@
 Derives every variable a lake model may ask for from a small required
 core, filling in only what is missing: relative humidity and dew point
 from each other, vapour pressure, cloud cover from measured shortwave
-([`calc_cc()`](http://limnotrack.com/climprep/reference/calc_cc.md)),
+([`calc_cc()`](http://limnotrack.com/metscale/reference/calc_cc.md)),
 downwelling longwave
-([`calc_in_lwr()`](http://limnotrack.com/climprep/reference/calc_in_lwr.md)),
+([`calc_in_lwr()`](http://limnotrack.com/metscale/reference/calc_in_lwr.md)),
 station and sea level pressure, wind speed/direction and u/v components,
 and snowfall.
 
@@ -33,7 +33,7 @@ expand_met(met, lat, lon, elev = 0, tz = "Etc/GMT-12", round_to = 3)
 - tz:
 
   timezone the timestamps refer to, used for the solar geometry in
-  [`calc_cc()`](http://limnotrack.com/climprep/reference/calc_cc.md).
+  [`calc_cc()`](http://limnotrack.com/metscale/reference/calc_cc.md).
   Default `"Etc/GMT-12"` (fixed NZST). Ignored when `MET_cldcvr` is
   supplied.
 

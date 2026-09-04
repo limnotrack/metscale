@@ -1,7 +1,7 @@
 # Hourly ERA5-Land meteorology for one named lake
 
 Convenience wrapper around
-[`extract_era5_hourly_met()`](http://limnotrack.com/climprep/reference/extract_era5_hourly_met.md)
+[`extract_era5_hourly_met()`](http://limnotrack.com/metscale/reference/extract_era5_hourly_met.md)
 that looks a lake up in a polygon layer by id or name and forwards its
 geometry.
 
@@ -45,7 +45,7 @@ extract_era5_lake_met(
 - method:
 
   spatial sampling passed to
-  [`extract_era5_hourly_met()`](http://limnotrack.com/climprep/reference/extract_era5_hourly_met.md):
+  [`extract_era5_hourly_met()`](http://limnotrack.com/metscale/reference/extract_era5_hourly_met.md):
   `"area"` (area-weighted mean of every overlapping ERA5 cell - best
   when a lake straddles several cells), `"area_mean"` (unweighted mean
   of overlapping cells), `"bilinear"` (4 nodes around the lake centroid,
@@ -54,14 +54,14 @@ extract_era5_lake_met(
 - ...:
 
   further arguments for
-  [`extract_era5_hourly_met()`](http://limnotrack.com/climprep/reference/extract_era5_hourly_met.md)
+  [`extract_era5_hourly_met()`](http://limnotrack.com/metscale/reference/extract_era5_hourly_met.md)
   (`years`, `months`, `variables`, `tz`, `format`, `precip_units`,
   `pressure_units`, `outfile`, `fill_gaps`, `verbose`).
 
 ## Value
 
 the data frame from
-[`extract_era5_hourly_met()`](http://limnotrack.com/climprep/reference/extract_era5_hourly_met.md),
+[`extract_era5_hourly_met()`](http://limnotrack.com/metscale/reference/extract_era5_hourly_met.md),
 with extra attributes `lake_id` and `lake_name`.
 
 ## Details

@@ -1,7 +1,7 @@
 # Convert CF / CMIP meteorology back to the AEME `MET_*` scheme
 
 The inverse of
-[`met_to_cf()`](http://limnotrack.com/climprep/reference/met_to_cf.md):
+[`met_to_cf()`](http://limnotrack.com/metscale/reference/met_to_cf.md):
 renames `tas`, `pr`, `sfcWind`, ... to the AEME `MET_*` names and
 converts units back (K -\> degC, Pa -\> hPa for vapour pressure, percent
 -\> fraction for cloud cover, `kg m-2 s-1` -\> "mm per timestep" for
@@ -45,7 +45,7 @@ the data frame with `MET_*` columns in AEME units.
 
 ## See also
 
-[`met_to_cf()`](http://limnotrack.com/climprep/reference/met_to_cf.md)
+[`met_to_cf()`](http://limnotrack.com/metscale/reference/met_to_cf.md)
 
 ## Examples
 

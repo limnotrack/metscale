@@ -5,7 +5,7 @@ the average shape of the day: an anomaly about the daily mean for
 additive variables (temperature, humidity, pressure, longwave) and a
 normalised factor for multiplicative ones (wind speed, shortwave,
 precipitation). Used by
-[`disaggregate_met_to_hourly()`](http://limnotrack.com/climprep/reference/disaggregate_met_to_hourly.md)
+[`disaggregate_met_to_hourly()`](http://limnotrack.com/metscale/reference/disaggregate_met_to_hourly.md)
 with `method = "diurnal"`.
 
 ## Usage
@@ -19,7 +19,7 @@ build_diurnal_climatology(hourly, tz = NULL, vars = NULL, n_sub = 24)
 - hourly:
 
   data frame with `Date` (POSIXct) and `MET_*` columns, e.g. from
-  [`extract_era5_lake_met()`](http://limnotrack.com/climprep/reference/extract_era5_lake_met.md).
+  [`extract_era5_lake_met()`](http://limnotrack.com/metscale/reference/extract_era5_lake_met.md).
 
 - tz:
 

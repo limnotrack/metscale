@@ -1,15 +1,15 @@
 # Fit a bias correction for ERA5-Land meteorology from local observations
 
 Joins an ERA5 met frame (from
-[`extract_era5_hourly_met()`](http://limnotrack.com/climprep/reference/extract_era5_hourly_met.md)
+[`extract_era5_hourly_met()`](http://limnotrack.com/metscale/reference/extract_era5_hourly_met.md)
 /
-[`extract_era5_lake_met()`](http://limnotrack.com/climprep/reference/extract_era5_lake_met.md))
+[`extract_era5_lake_met()`](http://limnotrack.com/metscale/reference/extract_era5_lake_met.md))
 to a matching frame of locally measured meteorology (from
-[`prepare_obs_met()`](http://limnotrack.com/climprep/reference/prepare_obs_met.md))
+[`prepare_obs_met()`](http://limnotrack.com/metscale/reference/prepare_obs_met.md))
 over their common period and fits, per variable, a transfer function
 that maps ERA5 onto the observations. The fitted object is applied to
 the full ERA5 record with
-[`apply_met_bias_correction()`](http://limnotrack.com/climprep/reference/apply_met_bias_correction.md).
+[`apply_met_bias_correction()`](http://limnotrack.com/metscale/reference/apply_met_bias_correction.md).
 
 ## Usage
 
@@ -41,7 +41,7 @@ fit_met_bias_correction(
 - obs:
 
   data frame with `Date` plus `MET_*` columns
-  ([`prepare_obs_met()`](http://limnotrack.com/climprep/reference/prepare_obs_met.md)
+  ([`prepare_obs_met()`](http://limnotrack.com/metscale/reference/prepare_obs_met.md)
   output). Must be the same resolution and time zone as `era5`.
 
 - vars:
@@ -149,5 +149,5 @@ Any stratum with fewer than `min_n` pairs falls back to the pooled
 
 ## See also
 
-[`prepare_obs_met()`](http://limnotrack.com/climprep/reference/prepare_obs_met.md),
-[`apply_met_bias_correction()`](http://limnotrack.com/climprep/reference/apply_met_bias_correction.md)
+[`prepare_obs_met()`](http://limnotrack.com/metscale/reference/prepare_obs_met.md),
+[`apply_met_bias_correction()`](http://limnotrack.com/metscale/reference/apply_met_bias_correction.md)

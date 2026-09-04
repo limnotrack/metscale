@@ -59,6 +59,6 @@ A data frame of daily meteorology.
 
 ## See also
 
-[`standardise_met()`](http://limnotrack.com/climprep/reference/standardise_met.md),
+[`standardise_met()`](http://limnotrack.com/metscale/reference/standardise_met.md),
 which recognises the raw ERA5 nc short names (`t2m`, `d2m`, `ssrd`,
 `strd`) directly.

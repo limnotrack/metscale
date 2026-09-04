@@ -1,7 +1,7 @@
 # Build a bias-corrected daily baseline for a climate-scenario workflow
 
 Applies a fitted
-[`fit_met_bias_correction()`](http://limnotrack.com/climprep/reference/fit_met_bias_correction.md)
+[`fit_met_bias_correction()`](http://limnotrack.com/metscale/reference/fit_met_bias_correction.md)
 to a full hourly reanalysis record, aggregates to daily and regenerates
 the dependent variables, so the result is ready to be handed to a
 delta-change routine such as `AEME`'s `climate_shift()` as the baseline
@@ -28,12 +28,12 @@ bias_correct_daily_baseline(
 - era5:
 
   hourly reanalysis met, from
-  [`extract_era5_lake_met()`](http://limnotrack.com/climprep/reference/extract_era5_lake_met.md).
+  [`extract_era5_lake_met()`](http://limnotrack.com/metscale/reference/extract_era5_lake_met.md).
 
 - bc:
 
   a `met_biascorr` from
-  [`fit_met_bias_correction()`](http://limnotrack.com/climprep/reference/fit_met_bias_correction.md);
+  [`fit_met_bias_correction()`](http://limnotrack.com/metscale/reference/fit_met_bias_correction.md);
   `NULL` to aggregate without correcting.
 
 - lat, lon, elev:
@@ -48,14 +48,14 @@ bias_correct_daily_baseline(
 - expand:
 
   regenerate the dependent variables with
-  [`expand_met()`](http://limnotrack.com/climprep/reference/expand_met.md)
+  [`expand_met()`](http://limnotrack.com/metscale/reference/expand_met.md)
   (default `TRUE`).
 
 - min_frac:
 
   minimum fraction of a day that must be present for that day to be
   kept, passed to
-  [`met_to_daily()`](http://limnotrack.com/climprep/reference/met_to_daily.md).
+  [`met_to_daily()`](http://limnotrack.com/metscale/reference/met_to_daily.md).
 
 - verbose:
 
@@ -75,9 +75,9 @@ not take that branch unintentionally.
 
 ## See also
 
-[scenario_workflow](http://limnotrack.com/climprep/reference/scenario_workflow.md)
+[scenario_workflow](http://limnotrack.com/metscale/reference/scenario_workflow.md)
 for the full delta-change pipeline and
-[`vignette("scenario-workflow", package = "climprep")`](http://limnotrack.com/climprep/articles/scenario-workflow.md).
+[`vignette("scenario-workflow", package = "metscale")`](http://limnotrack.com/metscale/articles/scenario-workflow.md).
 
 ## Examples
 

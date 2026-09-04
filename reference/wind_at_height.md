@@ -73,7 +73,7 @@ little in very light, stable conditions.
 
 ## See also
 
-[`met_wind_at_height()`](http://limnotrack.com/climprep/reference/met_wind_at_height.md)
+[`met_wind_at_height()`](http://limnotrack.com/metscale/reference/met_wind_at_height.md)
 to apply this to a `MET_*` data frame.
 
 ## Examples

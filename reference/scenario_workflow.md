@@ -18,7 +18,7 @@ delta. Correct the baseline instead, then apply the delta on top:
                 -> disaggregate_met_to_hourly()        # if sub-daily is needed
 
 See
-[`vignette("scenario-workflow", package = "climprep")`](http://limnotrack.com/climprep/articles/scenario-workflow.md)
+[`vignette("scenario-workflow", package = "metscale")`](http://limnotrack.com/metscale/articles/scenario-workflow.md)
 for a runnable end-to-end example on Lake Rotorua.
 
 Applying the local correction to the baseline *before* the delta-change
@@ -26,7 +26,7 @@ step is what makes the composition well defined, whatever kinds the two
 adjustments are: the NIWA CCAM change fields are additive in degC for
 temperature, percentage for rainfall, wind and humidity, and additive in
 W m-2 for shortwave, while
-[`fit_met_bias_correction()`](http://limnotrack.com/climprep/reference/fit_met_bias_correction.md)
+[`fit_met_bias_correction()`](http://limnotrack.com/metscale/reference/fit_met_bias_correction.md)
 picks the transform per variable. Do not try to fold the local
 correction in *after* the delta - correct first, shift second.
 
@@ -38,7 +38,7 @@ outside its training range.
 
 ## See also
 
-[`bias_correct_daily_baseline()`](http://limnotrack.com/climprep/reference/bias_correct_daily_baseline.md),
-[`fit_met_bias_correction()`](http://limnotrack.com/climprep/reference/fit_met_bias_correction.md),
-[`extract_cmip6_point()`](http://limnotrack.com/climprep/reference/extract_cmip6_point.md),
-[`disaggregate_met_to_hourly()`](http://limnotrack.com/climprep/reference/disaggregate_met_to_hourly.md)
+[`bias_correct_daily_baseline()`](http://limnotrack.com/metscale/reference/bias_correct_daily_baseline.md),
+[`fit_met_bias_correction()`](http://limnotrack.com/metscale/reference/fit_met_bias_correction.md),
+[`extract_cmip6_point()`](http://limnotrack.com/metscale/reference/extract_cmip6_point.md),
+[`disaggregate_met_to_hourly()`](http://limnotrack.com/metscale/reference/disaggregate_met_to_hourly.md)

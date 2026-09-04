@@ -91,7 +91,7 @@ A data frame of the submitted requests, as returned by
 
 ## See also
 
-[`read_era5_grib_point()`](http://limnotrack.com/climprep/reference/read_era5_grib_point.md)
+[`read_era5_grib_point()`](http://limnotrack.com/metscale/reference/read_era5_grib_point.md)
 to extract a point time series from the downloaded files.
 
 ## Examples

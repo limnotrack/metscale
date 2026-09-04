@@ -2,20 +2,20 @@
 
 ``` r
 
-library(climprep)
+library(metscale)
 ```
 
-`climprep`’s bias-correction and disaggregation tools operate on a
+`metscale`’s bias-correction and disaggregation tools operate on a
 meteorology data frame. This vignette covers the three ways to *acquire*
 ERA5 forcing, from lightest to heaviest. Whichever you use, the output
 feeds into
-[`standardise_met()`](http://limnotrack.com/climprep/reference/standardise_met.md),
-[`fit_met_bias_correction()`](http://limnotrack.com/climprep/reference/fit_met_bias_correction.md)
+[`standardise_met()`](http://limnotrack.com/metscale/reference/standardise_met.md),
+[`fit_met_bias_correction()`](http://limnotrack.com/metscale/reference/fit_met_bias_correction.md)
 and
-[`disaggregate_met_to_hourly()`](http://limnotrack.com/climprep/reference/disaggregate_met_to_hourly.md).
+[`disaggregate_met_to_hourly()`](http://limnotrack.com/metscale/reference/disaggregate_met_to_hourly.md).
 
 All three functions need suggested packages that are **not** installed
-with `climprep` by default:
+with `metscale` by default:
 
 ``` r
 
@@ -25,7 +25,7 @@ install.packages(c("httr2", "jsonlite", "terra", "ecmwfr", "stars", "sf"))
 ## 1. Point time series from ISIMIP3a — `download_era5_isimip_point()`
 
 The quickest route.
-[`download_era5_isimip_point()`](http://limnotrack.com/climprep/reference/download_era5_isimip_point.md)
+[`download_era5_isimip_point()`](http://limnotrack.com/metscale/reference/download_era5_isimip_point.md)
 pulls daily ERA5 (20CRv3-ERA5, ISIMIP3a `obsclim`) from the [ISIMIP
 repository API](https://files.isimip.org/api/v2) for any point on the
 globe. No account or key is required. Coverage currently runs to 2021.
@@ -60,7 +60,7 @@ documentation](https://bluegreen-labs.github.io/ecmwfr/#use).
 ecmwfr::wf_set_key(key = Sys.getenv("CDS_KEY"), user = Sys.getenv("CDS_USER"))
 ```
 
-[`download_era5_cds()`](http://limnotrack.com/climprep/reference/download_era5_cds.md)
+[`download_era5_cds()`](http://limnotrack.com/metscale/reference/download_era5_cds.md)
 submits one CDS request per variable / year / month (batched, up to 20
 at a time) and writes a GRIB file per request. Give it a point plus
 `buffer`, or an `sf` polygon as `shape`.
@@ -79,7 +79,7 @@ files
 
 Extract a point (or polygon-mean) time series from the downloaded GRIB
 with
-[`read_era5_grib_point()`](http://limnotrack.com/climprep/reference/read_era5_grib_point.md):
+[`read_era5_grib_point()`](http://limnotrack.com/metscale/reference/read_era5_grib_point.md):
 
 ``` r
 
@@ -91,7 +91,7 @@ head(df)
 
 If you already have hourly ERA5 netCDF on disk (named
 `era5_<variable>_hourly_<year>_<site>.nc`),
-[`convert_era5_netcdf()`](http://limnotrack.com/climprep/reference/convert_era5_netcdf.md)
+[`convert_era5_netcdf()`](http://limnotrack.com/metscale/reference/convert_era5_netcdf.md)
 aggregates each variable to daily with the appropriate function (mean,
 or max for precipitation / radiation) and returns AEME or LakeEnsemblR
 columns.
@@ -106,14 +106,14 @@ met <- convert_era5_netcdf(
 
 For **hourly** extraction from ERA5-Land netCDF — with de-accumulation
 of the flux variables, unit conversion and a time-zone shift — use
-[`extract_era5_hourly_met()`](http://limnotrack.com/climprep/reference/extract_era5_hourly_met.md)
+[`extract_era5_hourly_met()`](http://limnotrack.com/metscale/reference/extract_era5_hourly_met.md)
 /
-[`extract_era5_lake_met()`](http://limnotrack.com/climprep/reference/extract_era5_lake_met.md)
+[`extract_era5_lake_met()`](http://limnotrack.com/metscale/reference/extract_era5_lake_met.md)
 instead.
 
 `convert_era5_netcdf(format = "raw")` returns the ERA5 nc short names
 (`t2m`, `d2m`, `ssrd`, `strd`, …), which
-[`standardise_met()`](http://limnotrack.com/climprep/reference/standardise_met.md)
+[`standardise_met()`](http://limnotrack.com/metscale/reference/standardise_met.md)
 recognises directly:
 
 ``` r
@@ -125,13 +125,13 @@ std <- standardise_met(met_raw)
 
 ## Next steps
 
-- [`standardise_met()`](http://limnotrack.com/climprep/reference/standardise_met.md)
+- [`standardise_met()`](http://limnotrack.com/metscale/reference/standardise_met.md)
   — column names, units, time zone, resampling.
-- [`fit_met_bias_correction()`](http://limnotrack.com/climprep/reference/fit_met_bias_correction.md)
+- [`fit_met_bias_correction()`](http://limnotrack.com/metscale/reference/fit_met_bias_correction.md)
   /
-  [`apply_met_bias_correction()`](http://limnotrack.com/climprep/reference/apply_met_bias_correction.md)
+  [`apply_met_bias_correction()`](http://limnotrack.com/metscale/reference/apply_met_bias_correction.md)
   — correct ERA5 against local observations.
-- [`disaggregate_met_to_hourly()`](http://limnotrack.com/climprep/reference/disaggregate_met_to_hourly.md)
+- [`disaggregate_met_to_hourly()`](http://limnotrack.com/metscale/reference/disaggregate_met_to_hourly.md)
   — daily back to sub-daily.
-- [`expand_met()`](http://limnotrack.com/climprep/reference/expand_met.md)
+- [`expand_met()`](http://limnotrack.com/metscale/reference/expand_met.md)
   — derive the remaining variables a lake model needs.
