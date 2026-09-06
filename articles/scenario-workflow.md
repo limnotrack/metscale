@@ -29,10 +29,10 @@ theme_set(
 )
 
 ex   <- system.file("extdata", package = "metscale")
-TZ   <- "Etc/GMT-12"          # fixed NZST (UTC+12)
-LON  <- 176.2717
-LAT  <- -38.0790
-ELEV <- 279                   # Lake Rotorua surface, m
+tz   <- "Etc/GMT-12"          # fixed NZST (UTC+12)
+lon  <- 176.2717
+lat  <- -38.0790
+elev <- 279                   # Lake Rotorua surface, m
 ```
 
 The bundled example data is a deliberately small slice: a three-year
@@ -52,13 +52,13 @@ the bias correction is fitted.
 ``` r
 
 obs <- prepare_obs_met(file.path(ex, "rotorua_buoy_met_aeme_hr.csv.gz"),
-                       resample = "hour", tz = TZ, station = "rotorua_buoy",
+                       resample = "hour", tz = tz, station = "rotorua_buoy",
                        wind_height = 2, verbose = FALSE)
 
 era5 <- read.csv(file.path(ex, "rotorua_era5_hourly_met.csv.gz"),
                  check.names = FALSE)
-era5$Date <- as.POSIXct(era5$Date, tz = TZ, format = "%Y-%m-%d %H:%M:%S")
-attr(era5, "tz") <- TZ; attr(era5, "lat") <- LAT; attr(era5, "lon") <- LON
+era5$Date <- as.POSIXct(era5$Date, tz = tz, format = "%Y-%m-%d %H:%M:%S")
+attr(era5, "tz") <- tz; attr(era5, "lat") <- lat; attr(era5, "lon") <- lon
 
 ## "scale" (per-month offset, day-of-year loess-smoothed) is the right choice
 ## for a baseline that will be projected: a fitted CDF (eqm/qdm) extrapolates
@@ -101,21 +101,28 @@ ggplot(sk, aes(kind, rmse, fill = kind)) +
   labs(x = NULL, y = "cross-validated RMSE")
 ```
 
-![Figure 1. Leave-one-year-out cross-validated RMSE for each fitted
-variable, in that variable’s own units (note the free y-axis per panel).
+![\*\*Figure 1.\*\* Leave-one-year-out cross-validated RMSE for each
+fitted variable, in that variable's own units (free y-axis per panel).
 Because every year is scored by a model that never saw it, the fall from
-raw ERA5 to bias-corrected is out-of-sample skill, not in-sample fit.
-All six variables improve; station pressure improves most, as the
-correction also removes the sea-level-vs-surface offset left in the raw
-series.](scenario-workflow-bias-plot-1.png)
+\*raw ERA5\* to \*bias-corrected\* is out-of-sample skill, not in-sample
+fit. Every variable improves; station pressure improves most, for the
+reason noted below the
+figure.](scenario-workflow_files/figure-html/bias-plot-1.png)
 
 **Figure 1.** Leave-one-year-out cross-validated RMSE for each fitted
-variable, in that variable’s own units (note the free y-axis per panel).
-Because every year is scored by a model that never saw it, the fall from
-*raw ERA5* to *bias-corrected* is out-of-sample skill, not in-sample
-fit. All six variables improve; station pressure improves most, as the
-correction also removes the sea-level-vs-surface offset left in the raw
-series.
+variable, in that variable’s own units (free y-axis per panel). Because
+every year is scored by a model that never saw it, the fall from *raw
+ERA5* to *bias-corrected* is out-of-sample skill, not in-sample fit.
+Every variable improves; station pressure improves most, for the reason
+noted below the figure.
+
+The large station-pressure correction is **not** a unit mismatch — both
+series are in pascals. ERA5-Land reports surface pressure at its
+grid-cell orography height, which around Lake Rotorua sits roughly 250 m
+above the 279 m lake surface. That elevation gap appears as a
+near-constant offset of about -3 kPa (standard deviation only ~70 Pa,
+correlation 0.996), which the monthly `scale` offset removes almost
+exactly.
 
 Apply the fit to the whole record and expand the dependent variables —
 this corrected hourly series is also the donor for disaggregation in
@@ -124,16 +131,16 @@ step 3.
 ``` r
 
 era5_corr <- apply_met_bias_correction(era5, bc, expand = TRUE,
-                                       lat = LAT, lon = LON, elev = ELEV,
-                                       tz = TZ, verbose = FALSE)
+                                       lat = lat, lon = lon, elev = elev,
+                                       tz = tz, verbose = FALSE)
 ```
 
 One winter week shows the correction at work on the hourly series.
 
 ``` r
 
-w0  <- as.POSIXct("2024-07-08", tz = TZ)
-w1  <- as.POSIXct("2024-07-15", tz = TZ)
+w0  <- as.POSIXct("2024-07-08", tz = tz)
+w1  <- as.POSIXct("2024-07-15", tz = tz)
 win <- function(d) d[d$Date >= w0 & d$Date < w1, ]
 
 vs <- c(MET_tmpair = "air temperature (°C)",
@@ -160,12 +167,13 @@ ggplot(wk, aes(Date, value, colour = source, linewidth = source)) +
   labs(x = NULL, y = NULL)
 ```
 
-![Figure 2. Lake Rotorua, 8–15 July 2024: hourly buoy observations
-(black) against ERA5-Land before (grey) and after (red) the scale
-correction. The correction lifts the persistently cold ERA5 air
-temperature onto the buoy, scales up the under-forecast wind, and pulls
-down the moist bias in relative humidity, while leaving the sub-daily
-shape of each series intact.](scenario-workflow-correction-week-1.png)
+![\*\*Figure 2.\*\* Lake Rotorua, 8--15 July 2024: hourly buoy
+observations (black) against ERA5-Land before (grey) and after (red) the
+\*scale\* correction. The correction lifts the persistently cold ERA5
+air temperature onto the buoy, scales up the under-forecast wind, and
+pulls down the moist bias in relative humidity, while leaving the
+sub-daily shape of each series
+intact.](scenario-workflow_files/figure-html/correction-week-1.png)
 
 **Figure 2.** Lake Rotorua, 8–15 July 2024: hourly buoy observations
 (black) against ERA5-Land before (grey) and after (red) the *scale*
@@ -178,8 +186,8 @@ shape of each series intact.
 
 ``` r
 
-baseline <- bias_correct_daily_baseline(era5, bc, lat = LAT, lon = LON,
-                                        elev = ELEV, tz = TZ, verbose = FALSE)
+baseline <- bias_correct_daily_baseline(era5, bc, lat = lat, lon = lon,
+                                        elev = elev, tz = tz, verbose = FALSE)
 
 ## keep only fully-populated days
 ok <- stats::complete.cases(baseline[c("MET_radswd", "MET_tmpair", "MET_pprain",
@@ -199,7 +207,7 @@ AEME `MET_*` names and units.
 ``` r
 
 cmip <- extract_cmip6_point(file.path(ex, "rotorua_cmip6"),
-                            lon = LON, lat = LAT,
+                            lon = lon, lat = lat,
                             vars = c("MET_tmpair", "MET_pprain", "MET_wndspd",
                                      "MET_radswd", "MET_humrel"),
                             verbose = FALSE)
@@ -246,7 +254,7 @@ apply_delta <- function(base, delta) {
   ## regenerate dependents; station pressure carries no CMIP delta
   expand_met(out[, c("Date", "MET_radswd", "MET_tmpair", "MET_pprain",
                      "MET_humrel", "MET_wndspd", "MET_prsttn")],
-             lat = LAT, lon = LON, elev = ELEV, tz = TZ)
+             lat = lat, lon = lon, elev = elev, tz = tz)
 }
 
 deltas <- list(ssp245 = monthly_delta(cmip_by$ssp245, cmip_by$historical),
@@ -272,11 +280,12 @@ ggplot(dT, aes(month, delta, colour = scenario)) +
   labs(x = "month", y = expression(Delta * "T  (" * degree * "C)"))
 ```
 
-![Figure 3. Monthly-mean air-temperature change factors added in step 2:
-2090–2099 minus the 2005–2014 model baseline, one line per scenario.
-ssp585 warms more than ssp245 in every month. These twelve numbers are
-what apply_delta() adds to the corresponding months of the corrected
-daily baseline.](scenario-workflow-delta-fig-1.png)
+![\*\*Figure 3.\*\* Monthly-mean air-temperature change factors added in
+step 2: 2090--2099 minus the 2005--2014 model baseline, one line per
+scenario. \`ssp585\` warms more than \`ssp245\` in every month. These
+twelve numbers are what \`apply_delta()\` adds to the corresponding
+months of the corrected daily
+baseline.](scenario-workflow_files/figure-html/delta-fig-1.png)
 
 **Figure 3.** Monthly-mean air-temperature change factors added in step
 2: 2090–2099 minus the 2005–2014 model baseline, one line per scenario.
@@ -306,11 +315,11 @@ ggplot(pf, aes(Date, tmpair, colour = series)) +
   labs(x = NULL, y = expression("daily mean air T  (" * degree * "C)"))
 ```
 
-![Figure 4. Effect of the delta-change step over one year: the
+![\*\*Figure 4.\*\* Effect of the delta-change step over one year: the
 bias-corrected daily-mean air temperature for 2024 (grey) and the same
-days after adding the ssp585 2090–2099 monthly signal (red). The offset
-varies by month, so the projected series is warped rather than simply
-shifted.](scenario-workflow-project-fig-1.png)
+days after adding the \`ssp585\` 2090--2099 monthly signal (red). The
+offset varies by month, so the projected series is warped rather than
+simply shifted.](scenario-workflow_files/figure-html/project-fig-1.png)
 
 **Figure 4.** Effect of the delta-change step over one year: the
 bias-corrected daily-mean air temperature for 2024 (grey) and the same
@@ -330,7 +339,7 @@ rainfall totals are conserved.
 slice  <- proj$ssp585[format(proj$ssp585$Date, "%Y-%m") == "2024-07", ]
 hourly <- disaggregate_met_to_hourly(slice, donor = era5_corr,
                                      method = "fragments", swr = "clearsky",
-                                     lat = LAT, lon = LON, elev = ELEV, tz = TZ,
+                                     lat = lat, lon = lon, elev = elev, tz = tz,
                                      seed = 42, expand = TRUE, verbose = FALSE)
 nrow(hourly)
 #> [1] 744
@@ -351,11 +360,11 @@ ggplot(df, aes(Date, value, colour = panel)) +
   labs(x = NULL, y = NULL)
 ```
 
-![Figure 5. First three days (1–3 July 2024) of the disaggregated hourly
-ssp585 projection. Air temperature carries the diurnal shape of the
-analogue donor day; shortwave is not borrowed but reconstructed from
-clear-sky solar geometry, so it starts and ends each day at
-zero.](scenario-workflow-disagg-fig-1.png)
+![\*\*Figure 5.\*\* First three days (1--3 July 2024) of the
+disaggregated hourly \`ssp585\` projection. Air temperature carries the
+diurnal shape of the analogue donor day; shortwave is not borrowed but
+reconstructed from clear-sky solar geometry, so it starts and ends each
+day at zero.](scenario-workflow_files/figure-html/disagg-fig-1.png)
 
 **Figure 5.** First three days (1–3 July 2024) of the disaggregated
 hourly `ssp585` projection. Air temperature carries the diurnal shape of
@@ -392,7 +401,7 @@ daily_df$panel  <- factor(daily_df$panel,  lab)
 dd  <- unique(as.Date(h7$Date))
 tot <- slice$MET_pprain[match(dd, as.Date(slice$Date))]
 rain_lab <- data.frame(
-  Date  = as.POSIXct(paste(dd, "02:00:00"), tz = TZ),
+  Date  = as.POSIXct(paste(dd, "02:00:00"), tz = tz),
   value = max(h7$MET_pprain, na.rm = TRUE) * 0.95,
   panel = factor(lab[["MET_pprain"]], lab),
   text  = sprintf("%.1f mm/day", tot))
@@ -413,12 +422,12 @@ ggplot(hourly_df, aes(Date, value)) +
   labs(x = NULL, y = NULL)
 ```
 
-![Figure 6. Wettest seven-day window of the projected July 2024 month:
-the daily projection (grey step) and the hourly series disaggregated
-from it (colour). Hourly air temperature and wind vary about the daily
-mean; hourly rainfall is redistributed within each day while that day’s
-total (labelled, mm/day) is left
-unchanged.](scenario-workflow-daily-hourly-fig-1.png)
+![\*\*Figure 6.\*\* Wettest seven-day window of the projected July 2024
+month: the daily projection (grey step) and the hourly series
+disaggregated from it (colour). Hourly air temperature and wind vary
+about the daily mean; hourly rainfall is redistributed within each day
+while that day's total (labelled, mm/day) is left
+unchanged.](scenario-workflow_files/figure-html/daily-hourly-fig-1.png)
 
 **Figure 6.** Wettest seven-day window of the projected July 2024 month:
 the daily projection (grey step) and the hourly series disaggregated
@@ -431,7 +440,7 @@ the projected daily input:
 
 ``` r
 
-back <- met_to_daily(hourly, tz = TZ, min_frac = 1)
+back <- met_to_daily(hourly, tz = tz, min_frac = 1)
 m <- match(as.Date(back$Date), as.Date(slice$Date))
 data.frame(
   variable = c("MET_tmpair", "MET_humrel", "MET_pprain"),
@@ -443,6 +452,69 @@ data.frame(
 #> MET_humrel MET_humrel        0.0004166667
 #> MET_pprain MET_pprain        0.0030000000
 ```
+
+## Without local observations
+
+Only step 1 needs observations. The delta-change (step 2) touches
+nothing but the climate model runs, and the disaggregator (step 3) only
+needs an hourly *donor* at the location for the within-day shape — raw
+ERA5-Land is exactly that. So with no buoy you can still run the
+pipeline: use raw ERA5 aggregated to daily as the baseline, apply the
+same `deltas`, and disaggregate with raw ERA5 as the donor.
+
+``` r
+
+baseline_raw <- met_to_daily(era5, tz = tz)
+ok <- stats::complete.cases(baseline_raw[c("MET_radswd", "MET_tmpair", "MET_pprain",
+                                           "MET_wndspd", "MET_humrel")])
+baseline_raw <- baseline_raw[ok, ]
+
+proj_raw   <- lapply(deltas, apply_delta, base = baseline_raw)
+slice_raw  <- proj_raw$ssp585[format(proj_raw$ssp585$Date, "%Y-%m") == "2024-07", ]
+hourly_raw <- disaggregate_met_to_hourly(slice_raw, donor = era5,
+                                         method = "fragments", swr = "clearsky",
+                                         lat = lat, lon = lon, elev = elev, tz = tz,
+                                         seed = 42, expand = TRUE, verbose = FALSE)
+```
+
+The obs-free run is missing only the step-1 correction, so the
+difference between the two hourly series is essentially the ERA5-Land
+local bias — here the roughly 3 °C winter cold bias in air temperature
+seen in Figure 1.
+
+``` r
+
+cmp <- rbind(
+  data.frame(Date = hourly$Date,     value = hourly$MET_tmpair,
+             forcing = "obs-based"),
+  data.frame(Date = hourly_raw$Date, value = hourly_raw$MET_tmpair,
+             forcing = "obs-free (raw ERA5)"))
+cmp <- cmp[format(cmp$Date, "%Y-%m-%d") <= "2024-07-03", ]
+
+ggplot(cmp, aes(Date, value, colour = forcing)) +
+  geom_line() +
+  scale_colour_manual(values = c("obs-based" = "firebrick",
+                                 "obs-free (raw ERA5)" = "grey45")) +
+  labs(x = NULL, y = "air temperature (°C)")
+```
+
+![\*\*Figure 7.\*\* The July 2024 \`ssp585\` projection disaggregated to
+hourly two ways: with the buoy bias correction (red, as in Figure 5) and
+straight from raw ERA5-Land with no observations (grey). Delta-change
+and disaggregation are identical between the two; the near-constant gap
+is the ERA5-Land air-temperature bias that step 1 would
+remove.](scenario-workflow_files/figure-html/obs-free-fig-1.png)
+
+**Figure 7.** The July 2024 `ssp585` projection disaggregated to hourly
+two ways: with the buoy bias correction (red, as in Figure 5) and
+straight from raw ERA5-Land with no observations (grey). Delta-change
+and disaggregation are identical between the two; the near-constant gap
+is the ERA5-Land air-temperature bias that step 1 would remove.
+
+A middle option, when you have observations somewhere useful but not at
+the site itself — a nearby land station, a gap-filled station product —
+is to fit step 1 against that series instead of an on-site sensor; the
+code is unchanged.
 
 ## Caveats
 

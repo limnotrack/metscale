@@ -112,8 +112,28 @@ and the u/v swap in
 
 ### Vignettes
 
+- [`vignette("met-data-frames")`](http://limnotrack.com/metscale/articles/met-data-frames.md)
+  – the `MET_*` names, units and time-zone convention, and the helpers
+  ([`standardise_met()`](http://limnotrack.com/metscale/reference/standardise_met.md),
+  [`prepare_obs_met()`](http://limnotrack.com/metscale/reference/prepare_obs_met.md),
+  [`met_to_daily()`](http://limnotrack.com/metscale/reference/met_to_daily.md),
+  [`met_to_cf()`](http://limnotrack.com/metscale/reference/met_to_cf.md)
+  /
+  [`cf_to_met()`](http://limnotrack.com/metscale/reference/cf_to_met.md))
+  that bring data into it.
 - [`vignette("download-era5")`](http://limnotrack.com/metscale/articles/download-era5.md)
   – the three ways to acquire ERA5 forcing.
+- [`vignette("extract-era5-lake")`](http://limnotrack.com/metscale/articles/extract-era5-lake.md)
+  – point vs polygon (lake-average) extraction from ERA5-Land netCDF and
+  the `method` options.
+- [`vignette("deriving-variables")`](http://limnotrack.com/metscale/articles/deriving-variables.md)
+  – fill a minimal set out to everything a lake model needs with
+  [`expand_met()`](http://limnotrack.com/metscale/reference/expand_met.md)
+  and the underlying conversions.
+- [`vignette("bias-correction-methods")`](http://limnotrack.com/metscale/articles/bias-correction-methods.md)
+  – comparing `scale` / `variance` / `eqm` / `qdm`, reading the
+  cross-validated skill table, and the present-day vs projection
+  trade-off.
 - [`vignette("scenario-workflow")`](http://limnotrack.com/metscale/articles/scenario-workflow.md)
   – the end-to-end bias-correction -\> delta-change -\> disaggregation
-  pipeline on the bundled Lake Rotorua example data (precomputed).
+  pipeline on the bundled Lake Rotorua example data.

@@ -2,9 +2,13 @@ pandoc: 3.8.3
 pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
+  bias-correction-methods: bias-correction-methods.html
+  deriving-variables: deriving-variables.html
   download-era5: download-era5.html
+  extract-era5-lake: extract-era5-lake.html
+  met-data-frames: met-data-frames.html
   scenario-workflow: scenario-workflow.html
-last_built: 2026-09-04T03:54Z
+last_built: 2026-09-06T21:31Z
 urls:
   reference: http://limnotrack.com/metscale/reference
   article: http://limnotrack.com/metscale/articles

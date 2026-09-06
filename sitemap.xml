@@ -1,7 +1,11 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>http://limnotrack.com/metscale/404.html</loc></url>
+<url><loc>http://limnotrack.com/metscale/articles/bias-correction-methods.html</loc></url>
+<url><loc>http://limnotrack.com/metscale/articles/deriving-variables.html</loc></url>
 <url><loc>http://limnotrack.com/metscale/articles/download-era5.html</loc></url>
+<url><loc>http://limnotrack.com/metscale/articles/extract-era5-lake.html</loc></url>
 <url><loc>http://limnotrack.com/metscale/articles/index.html</loc></url>
+<url><loc>http://limnotrack.com/metscale/articles/met-data-frames.html</loc></url>
 <url><loc>http://limnotrack.com/metscale/articles/scenario-workflow.html</loc></url>
 <url><loc>http://limnotrack.com/metscale/authors.html</loc></url>
 <url><loc>http://limnotrack.com/metscale/index.html</loc></url>

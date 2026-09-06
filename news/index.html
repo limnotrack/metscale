@@ -18,7 +18,11 @@
       <ul class="navbar-nav me-auto"><li class="nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/download-era5.html">Download ERA5 data</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/bias-correction-methods.html">Choosing a bias-correction method</a></li>
+    <li><a class="dropdown-item" href="../articles/deriving-variables.html">Deriving a complete met set</a></li>
+    <li><a class="dropdown-item" href="../articles/download-era5.html">Download ERA5 data</a></li>
+    <li><a class="dropdown-item" href="../articles/extract-era5-lake.html">Extracting ERA5-Land over a lake</a></li>
+    <li><a class="dropdown-item" href="../articles/met-data-frames.html">Meteorology data frames: names, units, time zones</a></li>
     <li><a class="dropdown-item" href="../articles/scenario-workflow.html">Climate-scenario meteorology workflow</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -93,9 +97,17 @@
 <div class="section level3">
 <h3 id="vignettes-0-1-0">Vignettes<a class="anchor" aria-label="anchor" href="#vignettes-0-1-0"></a></h3>
 <ul><li>
+<code><a href="../articles/met-data-frames.html">vignette("met-data-frames")</a></code> – the <code>MET_*</code> names, units and time-zone convention, and the helpers (<code><a href="../reference/standardise_met.html">standardise_met()</a></code>, <code><a href="../reference/prepare_obs_met.html">prepare_obs_met()</a></code>, <code><a href="../reference/met_to_daily.html">met_to_daily()</a></code>, <code><a href="../reference/met_to_cf.html">met_to_cf()</a></code> / <code><a href="../reference/cf_to_met.html">cf_to_met()</a></code>) that bring data into it.</li>
+<li>
 <code><a href="../articles/download-era5.html">vignette("download-era5")</a></code> – the three ways to acquire ERA5 forcing.</li>
 <li>
-<code><a href="../articles/scenario-workflow.html">vignette("scenario-workflow")</a></code> – the end-to-end bias-correction -&gt; delta-change -&gt; disaggregation pipeline on the bundled Lake Rotorua example data (precomputed).</li>
+<code><a href="../articles/extract-era5-lake.html">vignette("extract-era5-lake")</a></code> – point vs polygon (lake-average) extraction from ERA5-Land netCDF and the <code>method</code> options.</li>
+<li>
+<code><a href="../articles/deriving-variables.html">vignette("deriving-variables")</a></code> – fill a minimal set out to everything a lake model needs with <code><a href="../reference/expand_met.html">expand_met()</a></code> and the underlying conversions.</li>
+<li>
+<code><a href="../articles/bias-correction-methods.html">vignette("bias-correction-methods")</a></code> – comparing <code>scale</code> / <code>variance</code> / <code>eqm</code> / <code>qdm</code>, reading the cross-validated skill table, and the present-day vs projection trade-off.</li>
+<li>
+<code><a href="../articles/scenario-workflow.html">vignette("scenario-workflow")</a></code> – the end-to-end bias-correction -&gt; delta-change -&gt; disaggregation pipeline on the bundled Lake Rotorua example data.</li>
 </ul></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
