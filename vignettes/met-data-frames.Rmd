@@ -1,0 +1,176 @@
+---
+title: "Meteorology data frames: names, units, time zones"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Meteorology data frames: names, units, time zones}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+options(width = 90)
+```
+
+Every `metscale` function reads and returns the same shape of object: a data
+frame with a `Date` column and one column per meteorological variable, named
+and unitised by a fixed convention. This vignette covers that convention and
+the helpers that bring an arbitrary table into it.
+
+```{r setup}
+library(metscale)
+ex <- system.file("extdata", package = "metscale")
+```
+
+## The `MET_*` scheme
+
+Columns follow the AEME `MET_*` names. `met_vars()` is the full list with
+units:
+
+```{r met-vars}
+met_vars()
+```
+
+A few points that trip people up:
+
+* **Rainfall and snowfall are per-timestep totals**, not rates --- `mm` in
+  an hourly frame means mm/hour, `mm` in a daily frame means mm/day. Every
+  other variable is an instantaneous value (or an interval mean).
+* **Pressure is in pascals.** `MET_prsttn` (station) and `MET_prmslp` (sea
+  level) are Pa, not hPa. Vapour pressure `MET_prvapr` is the exception --- hPa.
+* **Wind direction is the direction the wind blows *from***, degrees
+  clockwise from north, and `MET_wnduvu` / `MET_wnduvv` are the matching
+  eastward / northward components.
+* **Cloud cover is a 0--1 fraction**, not oktas or percent.
+
+## Matching arbitrary names: `guess_met_vars()`
+
+`guess_met_vars()` maps logger / council / NIWA / ERA5 / CMIP column names
+onto `MET_*` by case-insensitive pattern, returning `NA` where nothing fits:
+
+```{r guess}
+guess_met_vars(c("AirTemp_C", "WindSpd", "RH_pct", "SolarRad_Wm2",
+                 "rain_mm", "t2m", "sfcWind", "junk_column"))
+```
+
+## Standardising a whole table: `standardise_met()`
+
+`standardise_met()` renames with `guess_met_vars()` **and** repairs the
+common unit mistakes it can detect from the value ranges (Kelvin, hPa,
+humidity as a fraction, oktas, km/h, precipitation in metres, radiation in
+MJ m-2 day-1). It finds the date column itself and renames it `Date`.
+
+```{r standardise}
+raw <- data.frame(
+  timestamp   = as.Date("2024-01-01") + 0:4,
+  AirTemp_K   = c(291, 289, 292, 288, 293),
+  WindSpd_kmh = c(11, 18, 7, 22, 11),
+  SolarRad    = c(300, 120, 280, 90, 310),
+  RH          = c(0.72, 0.85, 0.61, 0.90, 0.55),
+  Rain_mm     = c(0, 12, 0, 25, 0))
+
+std <- standardise_met(raw)
+std
+```
+
+The messages say what it did; pass `verbose = FALSE` to silence them.
+Columns it cannot match are kept unchanged and warned about, so nothing is
+lost silently. It does **not** resample or derive missing variables --- that
+is `prepare_obs_met()` and `expand_met()`.
+
+## Preparing observations: `prepare_obs_met()`
+
+For a *measured* series destined for bias correction, `prepare_obs_met()`
+wraps `standardise_met()` and adds the steps that matter for lining the
+observations up with reanalysis:
+
+```{r prepare-obs}
+obs <- prepare_obs_met(file.path(ex, "rotorua_buoy_met_aeme_hr.csv.gz"),
+                       resample    = "hour",   # bin sub-hourly records to whole hours
+                       tz          = "Etc/GMT-12",
+                       wind_height = 2,        # 2 m buoy anemometer -> 10 m
+                       station     = "rotorua_buoy",
+                       verbose     = FALSE)
+str(obs, give.attr = FALSE)
+attributes(obs)[c("tz", "resolution", "station")]
+```
+
+What it adds over `standardise_met()`:
+
+* reads a `.csv` / `.csv.gz` / `.rds` path directly;
+* `resample = "hour"` / `"day"` --- means for most variables, **sums** for
+  rain and snow;
+* `interval = "ending"` (default) labels a sub-hourly record by the hour it
+  *ends* in, matching ERA5's accumulated-flux convention so the two join
+  cleanly on `Date`;
+* `derive = TRUE` fills `MET_wndspd`/`MET_wnddir` &harr; u/v and
+  `MET_humrel` &harr; `MET_tmpdew` when one side is present;
+* `wind_height` rescales a low anemometer to the 10 m convention
+  ([`wind_at_height()`]) --- a buoy at 2 m reads roughly 15--20% low;
+* records `tz`, `resolution` and `station` as attributes, which
+  `fit_met_bias_correction()` carries into its metadata.
+
+## Time zone
+
+The default `"Etc/GMT-12"` is **fixed** NZST (UTC+12, no daylight saving).
+A fixed offset keeps a gap-free regular sub-daily series --- civil time with
+DST has a missing hour in spring and a doubled hour in autumn, which breaks
+a strict hourly index. Use `"Pacific/Auckland"` only if your logger
+recorded civil time and you need it back in civil time.
+
+The zone is not cosmetic: `expand_met()`, `calc_cc()` and
+`estimate_hourly_swr()` take an explicit `tz` and evaluate the solar
+geometry at the matching UTC instants, so the shortwave peak lands at local
+solar noon. (The AEME versions of these routines forced the session zone to
+UTC and read the wall clock, shifting the solar curve by the UTC offset ---
+12 h for New Zealand. `metscale` fixes that; pass the zone your timestamps
+are actually in.)
+
+## Daily aggregation: `met_to_daily()`
+
+`met_to_daily()` collapses an hourly (or finer) frame to daily --- means for
+everything except rain and snow, which are summed --- and returns `Date` as
+class `Date`. `min_frac` drops days that are too incomplete to trust.
+
+```{r to-daily}
+era5 <- read.csv(file.path(ex, "rotorua_era5_hourly_met.csv.gz"), check.names = FALSE)
+era5$Date <- as.POSIXct(era5$Date, tz = "Etc/GMT-12")
+
+daily <- met_to_daily(era5, tz = "Etc/GMT-12", min_frac = 0.9)
+head(daily[, c("Date", "MET_tmpair", "MET_wndspd", "MET_pprain")])
+```
+
+## Handing data to CF / CMIP tools: `met_to_cf()` / `cf_to_met()`
+
+`met_to_cf()` renames the `MET_*` columns to the CF / CMIP short names
+(`tas`, `pr`, `sfcWind`, `rsds`, ...) and converts each to its CF-canonical
+unit; `cf_to_met()` is the exact inverse. The precipitation conversion
+needs a timestep (mm per step &harr; `kg m-2 s-1`), inferred from the time
+column or passed as `timestep`.
+
+```{r cf-roundtrip}
+cf <- met_to_cf(daily[, c("Date", "MET_tmpair", "MET_wndspd", "MET_pprain")])
+head(cf)
+attr(cf, "cf_units")
+
+back <- cf_to_met(cf)
+head(back)
+## round-trips to within floating point
+max(abs(back$MET_pprain - daily$MET_pprain))
+```
+
+`era5_ref_table` is the underlying variable / unit / daily-aggregation map
+across ERA5, LakeEnsemblR and AEME:
+
+```{r ref-table}
+era5_ref_table
+```
+
+## See also
+
+* `vignette("deriving-variables")` --- fill a minimal set out to everything
+  a lake model needs with `expand_met()`.
+* `vignette("bias-correction-methods")` --- correct a standardised ERA5
+  frame against a `prepare_obs_met()` frame.
+* `vignette("scenario-workflow")` --- the full bias-correction &rarr;
+  delta-change &rarr; disaggregation pipeline.

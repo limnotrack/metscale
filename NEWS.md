@@ -75,7 +75,17 @@ defects fixed (time-zone handling in the solar geometry, `MET_prsttn` /
 
 ## Vignettes
 
+* `vignette("met-data-frames")` -- the `MET_*` names, units and time-zone
+  convention, and the helpers (`standardise_met()`, `prepare_obs_met()`,
+  `met_to_daily()`, `met_to_cf()` / `cf_to_met()`) that bring data into it.
 * `vignette("download-era5")` -- the three ways to acquire ERA5 forcing.
+* `vignette("extract-era5-lake")` -- point vs polygon (lake-average)
+  extraction from ERA5-Land netCDF and the `method` options.
+* `vignette("deriving-variables")` -- fill a minimal set out to everything
+  a lake model needs with `expand_met()` and the underlying conversions.
+* `vignette("bias-correction-methods")` -- comparing `scale` / `variance` /
+  `eqm` / `qdm`, reading the cross-validated skill table, and the
+  present-day vs projection trade-off.
 * `vignette("scenario-workflow")` -- the end-to-end bias-correction ->
   delta-change -> disaggregation pipeline on the bundled Lake Rotorua
-  example data (precomputed).
+  example data.

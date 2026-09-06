@@ -1,8 +1,9 @@
 ## ===========================================================================
 ## Full climate-scenario meteorology batch for Lake Rotorua
 ## ---------------------------------------------------------------------------
-## The narrated, precomputed version of this pipeline is
-## vignette("scenario-workflow"). THIS script is the operational batch: it runs
+## The narrated version of this pipeline is vignette("scenario-workflow"),
+## which runs on the bundled example data. THIS script is the operational
+## batch: it runs
 ## on the *full* (non-bundled) source data and writes the complete
 ## 4-SSP x 2-window matrix of daily + hourly CSVs to data-raw/output/.
 ##

@@ -1,0 +1,175 @@
+---
+title: "Deriving a complete met set"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Deriving a complete met set}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+options(width = 90)
+```
+
+A lake model wants a dozen or more meteorological variables, but a station
+or a reanalysis extract usually gives you five or six. `expand_met()`
+derives the rest from a small required core, filling in **only what is
+missing**. This vignette shows `expand_met()` and then each of the
+underlying conversions on its own, because their assumptions are what
+determine whether the derived values are any good.
+
+```{r setup}
+library(metscale)
+ex   <- system.file("extdata", package = "metscale")
+lat  <- -38.0790
+lon  <- 176.2717
+elev <- 279          # Lake Rotorua surface, m
+```
+
+## `expand_met()`
+
+The required core is: `MET_radswd` (W m-2), `MET_tmpair` (degC),
+`MET_pprain` (mm per timestep), **one** of `MET_humrel` (%) or
+`MET_tmpdew` (degC), and wind as either `MET_wndspd` or both
+`MET_wnduvu` / `MET_wnduvv`. Take a minimal hourly slice:
+
+```{r minimal}
+era5 <- read.csv(file.path(ex, "rotorua_era5_hourly_met.csv.gz"), check.names = FALSE)
+era5$Date <- as.POSIXct(era5$Date, tz = "Etc/GMT-12")
+
+minimal <- era5[1:72, c("Date", "MET_radswd", "MET_tmpair", "MET_pprain",
+                        "MET_humrel", "MET_wndspd")]
+names(minimal)
+```
+
+```{r expand}
+full <- expand_met(minimal, lat = lat, lon = lon, elev = elev,
+                   tz = "Etc/GMT-12")
+names(full)
+setdiff(names(full), names(minimal))   # what expand_met() added
+```
+
+Nothing is resampled and supplied columns are never overwritten --- if you
+pass `MET_cldcvr`, that is what comes back. `tz` is used only for the solar
+geometry behind cloud cover, so pass the zone your `Date` column is
+actually in.
+
+## Humidity
+
+Dew point, relative humidity and vapour pressure are three views of the
+same quantity; give any one (plus air temperature) and the others follow.
+`metscale` uses Magnus--Tetens with the Alduchov & Eskridge coefficients.
+
+```{r humidity}
+airt <- c(5, 15, 25)
+rh   <- c(90, 60, 40)
+
+td <- rh_to_dewpoint(airt, rh)
+td
+dewpoint_to_rh(airt, td)          # inverse
+vapour_pressure(airt, rh)         # actual vapour pressure, hPa
+```
+
+## Pressure
+
+`station_pressure()` is the hypsometric equation with virtual temperature
+(it accounts for the humidity dependence of air density), reducing a
+sea-level pressure to the lake surface. `mslp_from_station()` /
+`station_from_mslp()` convert the other way.
+
+```{r pressure}
+ps <- station_pressure(airt = 12, relh = 80, elev = elev)   # Pa
+ps
+mslp_from_station(ps, elev = elev, airt = 12)               # back to sea level
+```
+
+This is why a raw ERA5-Land `MET_prsttn` can look ~3 kPa low at a lake: the
+reanalysis reports pressure at its grid-cell orography height, which is
+often a few hundred metres above the actual water surface. Supplying the
+true `elev` to `expand_met()` (or bias-correcting the pressure) fixes it.
+
+## Wind vector
+
+`ds2uv()` and `uv2ds()` are mutual inverses using the meteorological
+convention --- direction is where the wind comes **from**.
+
+```{r wind}
+uv <- ds2uv(d = 225, s = 5)      # SW wind at 5 m/s
+uv
+uv2ds(uv[, "u"], uv[, "v"])      # -> dir 225, speed 5
+```
+
+(The AEME port fixed a u/v swap here; `metscale`'s components are
+consistent with its own speed/direction.) To move a measured wind between
+sensor heights, use `wind_at_height()` / `met_wind_at_height()` --- a 2 m
+buoy anemometer reads roughly 15--20% low against the 10 m convention.
+
+## Cloud cover from measured shortwave
+
+`calc_cc()` inverts the ratio of measured to clear-sky potential shortwave:
+a bright day implies little cloud, a dim one implies a lot. It needs the
+timestamps, air temperature, dew point (or RH), position and `tz`.
+
+```{r cloud}
+cc <- calc_cc(minimal$Date, airt = minimal$MET_tmpair, swr = minimal$MET_radswd,
+              relh = minimal$MET_humrel, lat = lat, lon = lon, elev = elev,
+              tz = "Etc/GMT-12")
+summary(cc)                       # 0-1 fraction
+```
+
+Because it is a daytime ratio, night-time values are interpolated and a
+day with no usable daylight (or with `MET_radswd` already an all-day mean)
+gives a weak estimate.
+
+## Longwave
+
+`calc_in_lwr()` builds downwelling longwave from a clear-sky emissivity
+(Idso & Jackson) with a cloud correction:
+
+```{r longwave}
+calc_in_lwr(cc = c(0, 0.5, 1), airt = c(10, 10, 10), relh = c(80, 80, 80))
+```
+
+## Solar geometry and shortwave
+
+```{r solar}
+noon <- as.POSIXct("2024-01-15 13:00", tz = "Etc/GMT-12")
+solar_zenith_angle(noon, lat = lat, lon = lon)            # degrees from vertical
+clear_sky_swr(noon, lat = lat, lon = lon)                 # W m-2, cloud-free
+```
+
+`estimate_hourly_swr()` goes from a **daily-mean** `MET_radswd` to an
+hourly curve with real night-time zeros, a peak at local solar noon, and
+each day's mean preserved:
+
+```{r hourly-swr}
+day <- data.frame(Date = as.Date("2024-01-15") + 0:2,
+                  MET_radswd = c(280, 120, 310))
+hr  <- estimate_hourly_swr(day, lat = lat, lon = lon, tz = "Etc/GMT-12")
+
+## recover the daily means -- aggregating in the SAME zone the series is
+## labelled in; `as.Date()` defaults to UTC and would split days at the
+## wrong instant
+tapply(hr$MET_radswd, as.Date(hr$Date, tz = "Etc/GMT-12"), mean)   # == the inputs
+hr[which.max(hr$MET_radswd), ]                                     # peak near local noon
+```
+
+## Three assumptions worth remembering
+
+These are the behaviours `metscale` deliberately changed from the AEME
+originals, because getting them wrong is silent:
+
+* **Time zone.** `expand_met()`, `calc_cc()` and `estimate_hourly_swr()`
+  take an explicit `tz` and phase the solar geometry to it. Pass the zone
+  your timestamps are in; the default is fixed NZST (`"Etc/GMT-12"`).
+* **Pressure units.** Derived `MET_prsttn` / `MET_prmslp` are in **Pa**.
+* **Wind components.** `ds2uv()` / `uv2ds()` round-trip; derived u/v are
+  consistent with the speed/direction they came from.
+
+## See also
+
+* `vignette("met-data-frames")` --- the names, units and time-zone
+  convention these functions assume.
+* `vignette("scenario-workflow")` --- `expand_met()` in a full projection
+  pipeline, where it regenerates dependents after each adjustment.

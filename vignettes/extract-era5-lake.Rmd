@@ -1,0 +1,121 @@
+---
+title: "Extracting ERA5-Land over a lake"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Extracting ERA5-Land over a lake}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", eval = FALSE)
+options(width = 90)
+```
+
+Once you have hourly ERA5-Land netCDF on disk (see
+`vignette("download-era5")`), `extract_era5_hourly_met()` pulls a
+`metscale`-shaped hourly series out of it for a point or a polygon.
+`extract_era5_lake_met()` is a thin wrapper that looks a lake up in a
+polygon layer first. The code chunks here are **not executed** (they need
+the netCDF archive); the one exception is reading the bundled lake polygon.
+
+```{r setup, eval = TRUE}
+library(metscale)
+ex <- system.file("extdata", package = "metscale")
+```
+
+## Point extraction
+
+```{r point}
+met <- extract_era5_hourly_met(
+  path      = "era5_netcdf",          # directory of monthly hourly .nc files
+  lon       = 176.2717,
+  lat       = -38.0790,
+  years     = 2023:2025,
+  method    = "bilinear",             # 4 nodes around the point
+  tz        = "Etc/GMT-12",
+  format    = "AEME")                 # MET_* names and units
+```
+
+Files are located with `file_template`, an `sprintf()` pattern taking the
+variable and year; the default matches the naming that
+`download_era5_cds()` writes. `variables` defaults to the nine ERA5-Land
+fields `metscale` needs; `precip_units` and `pressure_units` control the
+output units (`"mm/hr"` and `"Pa"` by default). `fill_gaps = TRUE`
+reindexes onto a complete regular hourly sequence.
+
+## Polygon (lake-average) extraction
+
+A lake wider than an ERA5-Land grid cell (~0.1&deg;, roughly 9 km at this
+latitude) covers several cells, and a point sample then depends on exactly
+where the point falls. Averaging over the cells that overlap the lake
+polygon is more stable. Pass the geometry as `geom`:
+
+```{r polygon}
+lake_poly <- readRDS(file.path(ex, "rotorua_lake_shape.rds"))   # an sf polygon
+
+met_area <- extract_era5_hourly_met(
+  path   = "era5_netcdf",
+  geom   = lake_poly,
+  years  = 2023:2025,
+  method = "area",                    # area-weighted mean of overlapping cells
+  tz     = "Etc/GMT-12")
+```
+
+`method` chooses the spatial sampling:
+
+| `method` | what it does | use when |
+|---|---|---|
+| `"nearest"` | single closest cell centre | lake well inside one cell |
+| `"bilinear"` | 4 cell centres around the centroid | point-like water body (default) |
+| `"area_mean"` | unweighted mean of cells overlapping the polygon | lake spans a few cells |
+| `"area"` | **area-weighted** mean of overlapping cells | lake spans several cells unevenly |
+
+The bundled Lake Rotorua polygon spans more than one cell, so `"area"` is
+the right choice:
+
+```{r inspect-shape, eval = requireNamespace("sf", quietly = TRUE)}
+lake_poly <- readRDS(file.path(ex, "rotorua_lake_shape.rds"))
+sf::st_crs(lake_poly)$epsg          # 2193 (NZTM); any CRS is accepted
+round(as.numeric(sum(sf::st_area(lake_poly))) / 1e6, 1)   # lake area, km^2
+sf::st_bbox(sf::st_transform(lake_poly, 4326))            # ~0.11 deg E-W
+```
+
+An ~0.11&deg; east--west extent against a ~0.1&deg; grid means the lake
+touches two to three cells in each direction --- exactly the case
+area-weighting is for.
+
+## Looking a lake up by name
+
+If you have a lake polygon *layer* (many lakes), `extract_era5_lake_met()`
+matches one by id or name and forwards its geometry. It matches against
+`id_final`, `id_LID`, `name_final`, `name_fenz`, `name_english` and
+`name_maori` (case-insensitive).
+
+```{r lake-lookup}
+lakes <- readRDS("gis/lernzmp_lakes_master.rds")   # sf layer, or list of layers
+
+met <- extract_era5_lake_met(
+  lake   = "Rotorua",
+  path   = "era5_netcdf",
+  lakes  = lakes,
+  method = "area",
+  years  = 2023:2025,
+  outfile = "rotorua_era5_hourly_met.csv")
+
+## batch over several lakes
+ids  <- c("LID 11133", "LID 25994", "LID 54732")
+mets <- lapply(ids, extract_era5_lake_met, path = "era5_netcdf",
+               lakes = lakes, method = "area", years = 2024)
+```
+
+The bundled `rotorua_era5_hourly_met.csv.gz` used throughout the other
+vignettes is the output of exactly this call for Lake Rotorua.
+
+## See also
+
+* `vignette("download-era5")` --- getting the netCDF in the first place.
+* `vignette("met-data-frames")` --- the `MET_*` names, units and time-zone
+  convention the extractor output follows.
+* `vignette("bias-correction-methods")` --- correcting the extracted series
+  against local observations.
