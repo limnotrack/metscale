@@ -1,14 +1,15 @@
 # Extracting ERA5-Land over a lake
 
-Once you have hourly ERA5-Land netCDF on disk (see
+Once you have hourly ERA5-Land netCDF or GRIB on disk (see
 [`vignette("download-era5")`](http://limnotrack.com/metscale/articles/download-era5.md)),
 [`extract_era5_hourly_met()`](http://limnotrack.com/metscale/reference/extract_era5_hourly_met.md)
 pulls a `metscale`-shaped hourly series out of it for a point or a
 polygon.
 [`extract_era5_lake_met()`](http://limnotrack.com/metscale/reference/extract_era5_lake_met.md)
-is a thin wrapper that looks a lake up in a polygon layer first. The
-code chunks here are **not executed** (they need the netCDF archive);
-the one exception is reading the bundled lake polygon.
+is a thin wrapper that takes a lake polygon and defaults to the
+area-weighted method. The code chunks here are **not executed** (they
+need the reanalysis archive); the one exception is reading the bundled
+lake polygon.
 
 ``` r
 
@@ -30,14 +31,17 @@ met <- extract_era5_hourly_met(
   format    = "AEME")                 # MET_* names and units
 ```
 
-Files are located with `file_template`, an
-[`sprintf()`](https://rdrr.io/r/base/sprintf.html) pattern taking the
-variable and year; the default matches the naming that
+Files are located by matching `pattern` against the names in `path`. The
+default, `"{variable}"`, finds any `.nc` / `.grib` file whose name holds
+the ERA5 variable name and a 4-digit year – enough for
 [`download_era5_cds()`](http://limnotrack.com/metscale/reference/download_era5_cds.md)
-writes. `variables` defaults to the nine ERA5-Land fields `metscale`
-needs; `precip_units` and `pressure_units` control the output units
-(`"mm/hr"` and `"Pa"` by default). `fill_gaps = TRUE` reindexes onto a
-complete regular hourly sequence.
+output and most ad-hoc layouts. Give it explicitly to disambiguate or to
+filter by month, e.g. `pattern = "{year}_{month}_{variable}"` or
+`pattern = "*_{variable}_hourly_{year}_{month}_*"`; `{year}` / `{month}`
+are optional and `*` is a wildcard. `variables` defaults to the nine
+ERA5-Land fields `metscale` needs; `precip_units` and `pressure_units`
+control the output units (`"mm/hr"` and `"Pa"` by default).
+`fill_gaps = TRUE` reindexes onto a complete regular hourly sequence.
 
 ## Polygon (lake-average) extraction
 
@@ -86,30 +90,28 @@ An ~0.11° east–west extent against a ~0.1° grid means the lake touches
 two to three cells in each direction — exactly the case area-weighting
 is for.
 
-## Looking a lake up by name
+## `extract_era5_lake_met()` — the polygon wrapper
 
-If you have a lake polygon *layer* (many lakes),
 [`extract_era5_lake_met()`](http://limnotrack.com/metscale/reference/extract_era5_lake_met.md)
-matches one by id or name and forwards its geometry. It matches against
-`id_final`, `id_LID`, `name_final`, `name_fenz`, `name_english` and
-`name_maori` (case-insensitive).
+is the same call with two conveniences: `method` defaults to `"area"`,
+and optional `id` / `name` are stored on the result as `lake_id` /
+`lake_name` attributes. The polygon can be an `sf` / `sfc` object or a
+path to a vector file (`.gpkg`, `.shp`, `.rds`).
 
 ``` r
 
-lakes <- readRDS("gis/lernzmp_lakes_master.rds")   # sf layer, or list of layers
-
 met <- extract_era5_lake_met(
-  lake   = "Rotorua",
-  path   = "era5_netcdf",
-  lakes  = lakes,
-  method = "area",
-  years  = 2023:2025,
+  lake_poly,                     # or "gis/rotorua.gpkg"
+  path    = "era5_netcdf",
+  years   = 2023:2025,
+  name    = "Rotorua",
   outfile = "rotorua_era5_hourly_met.csv")
 
-## batch over several lakes
-ids  <- c("LID 11133", "LID 25994", "LID 54732")
-mets <- lapply(ids, extract_era5_lake_met, path = "era5_netcdf",
-               lakes = lakes, method = "area", years = 2024)
+## batch over a multi-lake layer
+lakes <- sf::st_read("gis/lakes.gpkg")
+mets  <- lapply(seq_len(nrow(lakes)), function(i)
+  extract_era5_lake_met(lakes[i, ], path = "era5_netcdf", years = 2024,
+                        id = lakes$id[i], name = lakes$name[i]))
 ```
 
 The bundled `rotorua_era5_hourly_met.csv.gz` used throughout the other

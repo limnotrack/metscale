@@ -1,8 +1,10 @@
 # Extract hourly ERA5-Land meteorology for a point or lake
 
-Reads monthly hourly ERA5-Land netCDF files from `path`, pulls a time
-series for a location, de-accumulates the flux variables, converts
-everything to standard lake-model units
+Reads monthly hourly ERA5-Land files from `path` (netCDF, or GRIB as
+downloaded by
+[`download_era5_cds()`](http://limnotrack.com/metscale/reference/download_era5_cds.md)),
+pulls a time series for a location, de-accumulates the flux variables,
+converts everything to standard lake-model units
 ([`met_vars()`](http://limnotrack.com/metscale/reference/met_vars.md)),
 shifts the time stamps from UTC to `tz` and returns a tidy wide data
 frame ready to be written to CSV.
@@ -26,7 +28,8 @@ extract_era5_hourly_met(
   format = c("AEME", "LER", "raw"),
   precip_units = c("mm/hr", "m/day", "mm/day", "m/hr"),
   pressure_units = c("Pa", "hPa"),
-  file_template = "nz_era5-land_%d_%02d_%s_daily.nc",
+  pattern = "{variable}",
+  max_dist_km = 50,
   area_crs = 2193,
   outfile = NULL,
   fill_gaps = TRUE,
@@ -38,7 +41,7 @@ extract_era5_hourly_met(
 
 - path:
 
-  directory holding the ERA5-Land netCDF files.
+  directory holding the ERA5-Land files (netCDF or GRIB).
 
 - lon, lat:
 
@@ -90,12 +93,25 @@ extract_era5_hourly_met(
 
   `"Pa"` (default) or `"hPa"`.
 
-- file_template:
+- pattern:
 
-  [`sprintf()`](https://rdrr.io/r/base/sprintf.html) template for the
-  file names, taking the year (integer), month (integer) and ERA5
-  variable name in that order. Default
-  `"nz_era5-land_%d_%02d_%s_daily.nc"`.
+  file-name template matched (unanchored, case-insensitive on the
+  extension) against the names in `path`. Understands the tokens
+  `{variable}` - the ERA5 name such as `2m_temperature`, which also
+  matches the short name (`t2m`) - `{year}` and `{month}`, plus `*` as a
+  wildcard; everything else is literal. `{year}` / `{month}` are
+  optional: include them to pin those fields or to select `months`; with
+  no `{year}` token the first 4-digit run in the name is taken as the
+  year. Only `.nc` / `.grib` / `.grb` / `.grib2` files are considered.
+  Default `"{variable}"`. Examples: `"{year}_{month}_{variable}"`,
+  `"*_{variable}_hourly_{year}_{month}_*"`.
+
+- max_dist_km:
+
+  when a `"nearest"` sample (or a `"nearest"` fallback from `"bilinear"`
+  / `"area"`) is used, the distance from the requested point to the
+  chosen ERA5 cell is reported, and an error is raised if it exceeds
+  this many kilometres. Default `50`; `Inf` disables the check.
 
 - area_crs:
 
@@ -128,10 +144,19 @@ their inputs are present. Attributes `lon`, `lat`, `method`, `tz`,
 
 ## Details
 
-Files are located with `file_template`, which defaults to the naming the
-LERNZmp download scripts produce,
-`nz_era5-land_<YYYY>_<MM>_<variable>_daily.nc` - note the data are
-hourly despite the `_daily` suffix.
+Files are located by matching `pattern` against the file names in
+`path`. The default, `"{variable}"`, picks up any `.nc` / `.grib` file
+whose name contains the ERA5 variable name (or its short name) and a
+4-digit year - which covers the output of
+[`download_era5_cds()`](http://limnotrack.com/metscale/reference/download_era5_cds.md)
+and most ad-hoc layouts. Give `pattern` explicitly to disambiguate or to
+filter by `months`; see the argument description.
+
+The reader backend is chosen per file from its extension: `.grib`,
+`.grb` and `.grib2` are read with terra, anything else with ncdf4. Each
+GRIB file is assumed to hold a single ERA5 variable across the month, as
+[`download_era5_cds()`](http://limnotrack.com/metscale/reference/download_era5_cds.md)
+writes them.
 
 The location can be given as
 
@@ -182,15 +207,13 @@ already the hourly amount.
 if (FALSE) { # \dontrun{
 ## by coordinate
 met <- extract_era5_hourly_met(
-  path = "download_era5-land/era5_netcdf",
-  lon  = 176.2717, lat = -38.0790, years = 2023:2024)
+  path = "era5_land", lon = 176.2717, lat = -38.0790, years = 2023:2024)
 
-## by lake polygon, area-weighted over every overlapping grid cell
-lakes <- readRDS("gis/lake_shapefile/lernzmp_lakes_master.rds")$updated
-poly  <- lakes[lakes$name_final == "Rotorua", ]
-met   <- extract_era5_hourly_met(
-  path = "download_era5-land/era5_netcdf", geom = poly,
-  method = "area", years = 2023:2024,
+## GRIB from download_era5_cds(), area-weighted over a lake polygon
+poly <- sf::st_read("gis/rotorua.gpkg")
+met  <- extract_era5_hourly_met(
+  path = "era5_cds", geom = poly, method = "area", years = 2023:2024,
+  pattern = "*_{variable}_hourly_{year}_{month}_*",
   outfile = "rotorua_era5_hourly_met.csv")
 } # }
 ```

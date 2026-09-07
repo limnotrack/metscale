@@ -87,6 +87,21 @@ df <- read_era5_grib_point(file = files, lat = lat, lon = lon)
 head(df)
 ```
 
+For a model-ready hourly frame (de-accumulated fluxes, standard units, a
+time-zone shift) point
+[`extract_era5_hourly_met()`](http://limnotrack.com/metscale/reference/extract_era5_hourly_met.md)
+at the download directory instead. It picks the reader from each file’s
+extension, so the GRIB written above is read directly; the default
+`pattern` (`"{variable}"`) already matches
+[`download_era5_cds()`](http://limnotrack.com/metscale/reference/download_era5_cds.md)
+names, so nothing else is needed:
+
+``` r
+
+met <- extract_era5_hourly_met(
+  path = "data/test", lon = lon, lat = lat, years = year)
+```
+
 ## 3. Aggregate downloaded netCDF to daily — `convert_era5_netcdf()`
 
 If you already have hourly ERA5 netCDF on disk (named

@@ -29,6 +29,19 @@ and the u/v swap in
   [`extract_era5_lake_met()`](http://limnotrack.com/metscale/reference/extract_era5_lake_met.md)
   – hourly ERA5-Land at a point or area-weighted over a lake polygon,
   de-accumulated, in standard units and a chosen time zone.
+  - Reads netCDF **or GRIB**; the backend is chosen per file from its
+    extension (`.grib` / `.grb` / `.grib2` via `terra`, else `ncdf4`).
+  - Files are found with `pattern`, a `{variable}` / `{year}` /
+    `{month}` template matched against the names in `path` (replaces the
+    old positional `file_template`; default `"{variable}"` covers
+    [`download_era5_cds()`](http://limnotrack.com/metscale/reference/download_era5_cds.md)
+    output and most ad-hoc layouts).
+  - `max_dist_km` (default 50) reports the distance to a `"nearest"`
+    sample and errors if the closest valid cell is further away.
+  - [`extract_era5_lake_met()`](http://limnotrack.com/metscale/reference/extract_era5_lake_met.md)
+    now takes a lake polygon (an `sf`/`sfc` or a path to one) plus
+    optional `id` / `name` labels; the old `lakes` / `layer` id-and-name
+    lookup has been removed.
 
 ### Climate projections
 

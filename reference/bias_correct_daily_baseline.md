@@ -83,8 +83,8 @@ for the full delta-change pipeline and
 
 ``` r
 if (FALSE) { # \dontrun{
-era5 <- extract_era5_lake_met("LID 11133", path = nc_dir, lakes = lakes,
-                              method = "area", years = 1980:2024)
+era5 <- extract_era5_lake_met(lake_poly, path = nc_dir, method = "area",
+                              years = 1980:2024)
 obs  <- prepare_obs_met("obs/rotorua_buoy_met.csv", resample = "hour")
 bc   <- fit_met_bias_correction(era5, obs)
 

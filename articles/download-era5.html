@@ -134,6 +134,15 @@ GRIB with <code><a href="../reference/read_era5_grib_point.html">read_era5_grib_
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_era5_grib_point.html">read_era5_grib_point</a></span><span class="op">(</span>file <span class="op">=</span> <span class="va">files</span>, lat <span class="op">=</span> <span class="va">lat</span>, lon <span class="op">=</span> <span class="va">lon</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span></code></pre></div>
+<p>For a model-ready hourly frame (de-accumulated fluxes, standard
+units, a time-zone shift) point <code><a href="../reference/extract_era5_hourly_met.html">extract_era5_hourly_met()</a></code>
+at the download directory instead. It picks the reader from each file’s
+extension, so the GRIB written above is read directly; the default
+<code>pattern</code> (<code>"{variable}"</code>) already matches
+<code><a href="../reference/download_era5_cds.html">download_era5_cds()</a></code> names, so nothing else is needed:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">met</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extract_era5_hourly_met.html">extract_era5_hourly_met</a></span><span class="op">(</span></span>
+<span>  path <span class="op">=</span> <span class="st">"data/test"</span>, lon <span class="op">=</span> <span class="va">lon</span>, lat <span class="op">=</span> <span class="va">lat</span>, years <span class="op">=</span> <span class="va">year</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="aggregate-downloaded-netcdf-to-daily-convert_era5_netcdf">3. Aggregate downloaded netCDF to daily —
@@ -144,7 +153,7 @@ GRIB with <code><a href="../reference/read_era5_grib_point.html">read_era5_grib_
 <code><a href="../reference/convert_era5_netcdf.html">convert_era5_netcdf()</a></code> aggregates each variable to daily
 with the appropriate function (mean, or max for precipitation /
 radiation) and returns AEME or LakeEnsemblR columns.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">met</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/convert_era5_netcdf.html">convert_era5_netcdf</a></span><span class="op">(</span></span>
 <span>  lat <span class="op">=</span> <span class="va">lat</span>, lon <span class="op">=</span> <span class="va">lon</span>, year <span class="op">=</span> <span class="fl">2022</span><span class="op">:</span><span class="fl">2023</span>,</span>
 <span>  path <span class="op">=</span> <span class="st">"era5_netcdf"</span>, site <span class="op">=</span> <span class="st">"toba"</span>, format <span class="op">=</span> <span class="st">"AEME"</span></span>
@@ -157,7 +166,7 @@ shift — use <code><a href="../reference/extract_era5_hourly_met.html">extract_
 short names (<code>t2m</code>, <code>d2m</code>, <code>ssrd</code>,
 <code>strd</code>, …), which <code><a href="../reference/standardise_met.html">standardise_met()</a></code> recognises
 directly:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">met_raw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/convert_era5_netcdf.html">convert_era5_netcdf</a></span><span class="op">(</span>lat <span class="op">=</span> <span class="va">lat</span>, lon <span class="op">=</span> <span class="va">lon</span>, year <span class="op">=</span> <span class="fl">2022</span>,</span>
 <span>                               path <span class="op">=</span> <span class="st">"era5_netcdf"</span>, format <span class="op">=</span> <span class="st">"raw"</span><span class="op">)</span></span>
 <span><span class="va">std</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/standardise_met.html">standardise_met</a></span><span class="op">(</span><span class="va">met_raw</span><span class="op">)</span></span></code></pre></div>

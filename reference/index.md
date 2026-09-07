@@ -63,7 +63,7 @@
   : Extract hourly ERA5-Land meteorology for a point or lake
 
 - [`extract_era5_lake_met()`](http://limnotrack.com/metscale/reference/extract_era5_lake_met.md)
-  : Hourly ERA5-Land meteorology for one named lake
+  : Hourly ERA5-Land meteorology averaged over a lake polygon
 
 - [`fit_met_bias_correction()`](http://limnotrack.com/metscale/reference/fit_met_bias_correction.md)
   : Fit a bias correction for ERA5-Land meteorology from local

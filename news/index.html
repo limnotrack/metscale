@@ -53,7 +53,14 @@
 <li>
 <code><a href="../reference/convert_era5_netcdf.html">convert_era5_netcdf()</a></code> – aggregate a downloaded ERA5 netCDF to daily.</li>
 <li>
-<code><a href="../reference/extract_era5_hourly_met.html">extract_era5_hourly_met()</a></code> / <code><a href="../reference/extract_era5_lake_met.html">extract_era5_lake_met()</a></code> – hourly ERA5-Land at a point or area-weighted over a lake polygon, de-accumulated, in standard units and a chosen time zone.</li>
+<code><a href="../reference/extract_era5_hourly_met.html">extract_era5_hourly_met()</a></code> / <code><a href="../reference/extract_era5_lake_met.html">extract_era5_lake_met()</a></code> – hourly ERA5-Land at a point or area-weighted over a lake polygon, de-accumulated, in standard units and a chosen time zone.
+<ul><li>Reads netCDF <strong>or GRIB</strong>; the backend is chosen per file from its extension (<code>.grib</code> / <code>.grb</code> / <code>.grib2</code> via <code>terra</code>, else <code>ncdf4</code>).</li>
+<li>Files are found with <code>pattern</code>, a <code>{variable}</code> / <code>{year}</code> / <code>{month}</code> template matched against the names in <code>path</code> (replaces the old positional <code>file_template</code>; default <code>"{variable}"</code> covers <code><a href="../reference/download_era5_cds.html">download_era5_cds()</a></code> output and most ad-hoc layouts).</li>
+<li>
+<code>max_dist_km</code> (default 50) reports the distance to a <code>"nearest"</code> sample and errors if the closest valid cell is further away.</li>
+<li>
+<code><a href="../reference/extract_era5_lake_met.html">extract_era5_lake_met()</a></code> now takes a lake polygon (an <code>sf</code>/<code>sfc</code> or a path to one) plus optional <code>id</code> / <code>name</code> labels; the old <code>lakes</code> / <code>layer</code> id-and-name lookup has been removed.</li>
+</ul></li>
 </ul></div>
 <div class="section level3">
 <h3 id="climate-projections-0-1-0">Climate projections<a class="anchor" aria-label="anchor" href="#climate-projections-0-1-0"></a></h3>
