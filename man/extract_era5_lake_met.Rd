@@ -2,72 +2,68 @@
 % Please edit documentation in R/extract_era5_lake_met.R
 \name{extract_era5_lake_met}
 \alias{extract_era5_lake_met}
-\title{Hourly ERA5-Land meteorology for one named lake}
+\title{Hourly ERA5-Land meteorology averaged over a lake polygon}
 \usage{
 extract_era5_lake_met(
-  lake,
+  polygon,
   path,
-  lakes = NULL,
-  layer = "updated",
   method = c("area", "area_mean", "bilinear", "nearest"),
+  id = NULL,
+  name = NULL,
   ...
 )
 }
 \arguments{
-\item{lake}{a lake identifier matched against \code{id_final} (e.g.
-\code{"LID 1"} or \code{"1"}), \code{id_LID}, \code{name_final}, \code{name_fenz},
-\code{name_english} or \code{name_maori} (case-insensitive); or an \code{sf}/\code{sfc}
-polygon to use directly, in which case \code{lakes} is not needed.}
+\item{polygon}{the lake outline: an \code{sf} / \code{sfc} polygon in any CRS, a
+path to a vector file \code{\link[sf:st_read]{sf::st_read()}} can open (\code{.gpkg}, \code{.shp}, ...),
+or a path to an \code{.rds} holding an \code{sf} / \code{sfc}. Several features are
+unioned into one.}
 
-\item{path}{directory with the ERA5-Land netCDF files.}
+\item{path}{directory holding the ERA5-Land files (netCDF or GRIB); see
+\code{\link[=extract_era5_hourly_met]{extract_era5_hourly_met()}} for how files are matched and the reader
+backend chosen.}
 
-\item{lakes}{an \code{sf} polygon layer, a named list of such layers (see
-\code{layer}), or a path to an \code{.rds} holding either. Required unless
-\code{lake} is itself a geometry.}
+\item{method}{spatial sampling, default \code{"area"}. See
+\code{\link[=extract_era5_hourly_met]{extract_era5_hourly_met()}} for \code{"area"}, \code{"area_mean"}, \code{"bilinear"}
+and \code{"nearest"}.}
 
-\item{layer}{when \code{lakes} is a list of layers, which element to use.
-Default \code{"updated"}, falling back to the only/first element.}
-
-\item{method}{spatial sampling passed to \code{\link[=extract_era5_hourly_met]{extract_era5_hourly_met()}}:
-\code{"area"} (area-weighted mean of every overlapping ERA5 cell - best
-when a lake straddles several cells), \code{"area_mean"} (unweighted mean
-of overlapping cells), \code{"bilinear"} (4 nodes around the lake
-centroid, the default) or \code{"nearest"}.}
+\item{id, name}{optional labels stored on the result as attributes
+\code{lake_id} / \code{lake_name} - handy when binding many lakes together.}
 
 \item{...}{further arguments for \code{\link[=extract_era5_hourly_met]{extract_era5_hourly_met()}}
 (\code{years}, \code{months}, \code{variables}, \code{tz}, \code{format}, \code{precip_units},
-\code{pressure_units}, \code{outfile}, \code{fill_gaps}, \code{verbose}).}
+\code{pressure_units}, \code{pattern}, \code{max_dist_km}, \code{outfile}, \code{fill_gaps},
+\code{verbose}).}
 }
 \value{
 the data frame from \code{\link[=extract_era5_hourly_met]{extract_era5_hourly_met()}}, with extra
 attributes \code{lake_id} and \code{lake_name}.
 }
 \description{
-Convenience wrapper around \code{\link[=extract_era5_hourly_met]{extract_era5_hourly_met()}} that looks a lake
-up in a polygon layer by id or name and forwards its geometry.
+Thin convenience wrapper around \code{\link[=extract_era5_hourly_met]{extract_era5_hourly_met()}}: it takes a
+single lake outline, defaults \code{method} to \code{"area"} (the area-weighted
+mean of every overlapping ERA5 grid cell, best when a lake straddles
+several cells) and tags the result with optional \code{id} / \code{name} labels.
 }
 \details{
-The lookup is aimed at the LERNZmp \code{lernzmp_lakes_master} layer (a list
-with \code{original} / \code{updated} \code{sf} layers in NZGD2000 / NZTM, EPSG:2193)
-but works with any \code{sf} layer carrying one or more of the identifier
-columns listed under \code{lake}.
+For a point, a raw geometry, or full control use
+\code{\link[=extract_era5_hourly_met]{extract_era5_hourly_met()}} directly.
 }
 \examples{
 \dontrun{
-lakes <- readRDS("gis/lake_shapefile/lernzmp_lakes_master.rds")
+poly <- sf::st_read("gis/rotorua.gpkg")
 
 met <- extract_era5_lake_met(
-  lake   = "Rotorua",
-  path   = "download_era5-land/era5_netcdf",
-  lakes  = lakes,
-  method = "area",
-  years  = 2023:2024,
+  poly,
+  path    = "era5_land",
+  years   = 2023:2024,
+  name    = "Rotorua",
   outfile = "rotorua_era5_hourly_met.csv")
 
-## loop over a set of lakes
-ids <- c("LID 25994", "LID 25998", "LID 54732")
-mets <- lapply(ids, extract_era5_lake_met,
-               path = "download_era5-land/era5_netcdf",
-               lakes = lakes, method = "area", years = 2024)
+## batch over a multi-lake layer
+lakes <- sf::st_read("gis/lakes.gpkg")
+mets  <- lapply(seq_len(nrow(lakes)), function(i)
+  extract_era5_lake_met(lakes[i, ], path = "era5_land", years = 2024,
+                        id = lakes$id[i], name = lakes$name[i]))
 }
 }

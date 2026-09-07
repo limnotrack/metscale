@@ -7,7 +7,7 @@ Authors@R:
            comment = c(ORCID = "0000-0002-3834-8868"))
 Description: Prepare model-ready meteorological forcing from gridded
     reanalysis and climate projections. Extract hourly meteorology from
-    reanalysis netCDF (ERA5-Land) at a point or averaged over a polygon,
+    reanalysis netCDF or GRIB (ERA5-Land) at a point or averaged over a polygon,
     convert to standard units and a chosen time zone, bias-correct against
     locally measured observations (monthly scaling, variance scaling,
     linear regression, empirical or trend-preserving quantile mapping,

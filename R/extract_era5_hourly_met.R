@@ -1,15 +1,23 @@
 #' Extract hourly ERA5-Land meteorology for a point or lake
 #'
-#' Reads monthly hourly ERA5-Land netCDF files from `path`, pulls a time
-#' series for a location, de-accumulates the flux variables, converts
-#' everything to standard lake-model units ([met_vars()]), shifts the time
-#' stamps from UTC to `tz` and returns a tidy wide data frame ready to be
-#' written to CSV.
+#' Reads monthly hourly ERA5-Land files from `path` (netCDF, or GRIB as
+#' downloaded by [download_era5_cds()]), pulls a time series for a
+#' location, de-accumulates the flux variables, converts everything to
+#' standard lake-model units ([met_vars()]), shifts the time stamps from
+#' UTC to `tz` and returns a tidy wide data frame ready to be written to
+#' CSV.
 #'
-#' Files are located with `file_template`, which defaults to the naming the
-#' LERNZmp download scripts produce,
-#' `nz_era5-land_<YYYY>_<MM>_<variable>_daily.nc` - note the data are hourly
-#' despite the `_daily` suffix.
+#' Files are located by matching `pattern` against the file names in
+#' `path`. The default, `"{variable}"`, picks up any `.nc` / `.grib` file
+#' whose name contains the ERA5 variable name (or its short name) and a
+#' 4-digit year - which covers the output of [download_era5_cds()] and
+#' most ad-hoc layouts. Give `pattern` explicitly to disambiguate or to
+#' filter by `months`; see the argument description.
+#'
+#' The reader backend is chosen per file from its extension: `.grib`,
+#' `.grb` and `.grib2` are read with \pkg{terra}, anything else with
+#' \pkg{ncdf4}. Each GRIB file is assumed to hold a single ERA5 variable
+#' across the month, as [download_era5_cds()] writes them.
 #'
 #' The location can be given as
 #'   * `lon` / `lat` scalars, or
@@ -42,10 +50,22 @@
 #' the 01:00 UTC step (and the first record), where the stored value is
 #' already the hourly amount.
 #'
-#' @param path   directory holding the ERA5-Land netCDF files.
-#' @param file_template `sprintf()` template for the file names, taking the
-#'   year (integer), month (integer) and ERA5 variable name in that order.
-#'   Default `"nz_era5-land_%d_%02d_%s_daily.nc"`.
+#' @param path   directory holding the ERA5-Land files (netCDF or GRIB).
+#' @param pattern file-name template matched (unanchored, case-insensitive
+#'   on the extension) against the names in `path`. Understands the tokens
+#'   `{variable}` - the ERA5 name such as `2m_temperature`, which also
+#'   matches the short name (`t2m`) - `{year}` and `{month}`, plus `*` as a
+#'   wildcard; everything else is literal. `{year}` / `{month}` are
+#'   optional: include them to pin those fields or to select `months`;
+#'   with no `{year}` token the first 4-digit run in the name is taken as
+#'   the year. Only `.nc` / `.grib` / `.grb` / `.grib2` files are
+#'   considered. Default `"{variable}"`. Examples: `"{year}_{month}_{variable}"`,
+#'   `"*_{variable}_hourly_{year}_{month}_*"`.
+#' @param max_dist_km when a `"nearest"` sample (or a `"nearest"` fallback
+#'   from `"bilinear"` / `"area"`) is used, the distance from the requested
+#'   point to the chosen ERA5 cell is reported, and an error is raised if
+#'   it exceeds this many kilometres. Default `50`; `Inf` disables the
+#'   check.
 #' @param area_crs projected CRS (EPSG code or WKT) used to compute polygon
 #'   intersection areas for `method = "area"`. Default `2193` (NZTM 2000);
 #'   use a projection appropriate to your region.
@@ -86,15 +106,13 @@
 #' \dontrun{
 #' ## by coordinate
 #' met <- extract_era5_hourly_met(
-#'   path = "download_era5-land/era5_netcdf",
-#'   lon  = 176.2717, lat = -38.0790, years = 2023:2024)
+#'   path = "era5_land", lon = 176.2717, lat = -38.0790, years = 2023:2024)
 #'
-#' ## by lake polygon, area-weighted over every overlapping grid cell
-#' lakes <- readRDS("gis/lake_shapefile/lernzmp_lakes_master.rds")$updated
-#' poly  <- lakes[lakes$name_final == "Rotorua", ]
-#' met   <- extract_era5_hourly_met(
-#'   path = "download_era5-land/era5_netcdf", geom = poly,
-#'   method = "area", years = 2023:2024,
+#' ## GRIB from download_era5_cds(), area-weighted over a lake polygon
+#' poly <- sf::st_read("gis/rotorua.gpkg")
+#' met  <- extract_era5_hourly_met(
+#'   path = "era5_cds", geom = poly, method = "area", years = 2023:2024,
+#'   pattern = "*_{variable}_hourly_{year}_{month}_*",
 #'   outfile = "rotorua_era5_hourly_met.csv")
 #' }
 #' @export
@@ -120,7 +138,8 @@ extract_era5_hourly_met <- function(path,
                                     precip_units = c("mm/hr", "m/day",
                                                      "mm/day", "m/hr"),
                                     pressure_units = c("Pa", "hPa"),
-                                    file_template = "nz_era5-land_%d_%02d_%s_daily.nc",
+                                    pattern = "{variable}",
+                                    max_dist_km = 50,
                                     area_crs = 2193,
                                     outfile = NULL,
                                     fill_gaps = TRUE,
@@ -131,10 +150,19 @@ extract_era5_hourly_met <- function(path,
   precip_units   <- match.arg(precip_units)
   pressure_units <- match.arg(pressure_units)
   stopifnot(dir.exists(path))
-  if (!requireNamespace("ncdf4", quietly = TRUE))
-    stop("Package 'ncdf4' is required.")
 
   say <- function(...) if (isTRUE(verbose)) message(...)
+
+  ## Backend is chosen per file from its extension: GRIB (.grib/.grb/.grib2)
+  ## is read with 'terra', everything else with 'ncdf4'.
+  era5_fmt <- function(f) {
+    ext <- tolower(tools::file_ext(f))
+    if (ext %in% c("grib", "grb", "grib2", "grb2")) "grib" else "nc"
+  }
+  req_pkg <- function(p)
+    if (!requireNamespace(p, quietly = TRUE))
+      stop("Package '", p, "' is required to read these ERA5 files.",
+           call. = FALSE)
 
   ## ---- resolve location to WGS84 point + optional polygon --------------
   poly_ll <- NULL
@@ -191,27 +219,67 @@ extract_era5_hourly_met <- function(path,
   if (length(unknown))
     stop("Unsupported variable(s): ", paste(unknown, collapse = ", "))
 
-  fname <- function(v, y, m)
-    file.path(path, sprintf(file_template, y, m, v))
+  ## ---- locate files by matching `pattern` against names in `path` -------
+  ## `pattern` carries the tokens {variable} / {year} / {month} and `*`
+  ## wildcards; it is turned into a regex and matched unanchored against
+  ## each met-extension file name. {variable} also matches the ERA5 short
+  ## name(s); {year} / {month} pin and enable filtering on those fields,
+  ## and with no {year} token the first 4-digit run is taken as the year.
+  esc_rx <- function(s) gsub("([][{}().+*?^$|\\\\-])", "\\\\\\1", s)
+  var_alts <- function(v) {
+    sn <- ref[[v]]$nc
+    sn <- ifelse(nchar(sn) <= 3L, paste0("\\b", esc_rx(sn), "\\b"), esc_rx(sn))
+    paste0("(?:", paste(c(esc_rx(v), sn), collapse = "|"), ")")
+  }
+  pattern_rx <- function(v) {
+    toks <- regmatches(pattern, gregexpr(
+      "\\{variable\\}|\\{year\\}|\\{month\\}|\\*|[^{}*]+", pattern))[[1]]
+    ny <- 0L; nm <- 0L
+    body <- vapply(toks, function(p) switch(p,
+      "{variable}" = var_alts(v),
+      "{year}"  = { ny <<- ny + 1L; if (ny == 1L) "(\\d{4})"   else "\\d{4}" },
+      "{month}" = { nm <<- nm + 1L; if (nm == 1L) "(\\d{1,2})" else "\\d{1,2}" },
+      "*"       = ".*",
+      esc_rx(p)), character(1), USE.NAMES = FALSE)
+    list(rx = paste(body, collapse = ""), has_year = ny > 0L, has_month = nm > 0L)
+  }
 
-  ## ---- discover years on disk ----------------------------------------------
-  ## Derive a search regex from file_template by substituting a year/month
-  ## capture group and the variable name, so a custom template still works.
+  pool <- list.files(path)
+  pool <- pool[grepl("\\.(nc|grib|grib2|grb|grb2)$", pool, ignore.case = TRUE)]
+
+  files_for <- function(v) {
+    pr  <- pattern_rx(v)
+    cap <- regmatches(pool, regexec(pr$rx, pool, perl = TRUE))
+    hit <- lengths(cap) > 0
+    if (!any(hit)) return(NULL)
+    pool <- pool[hit]; cap <- cap[hit]
+    if (pr$has_year) {
+      yr <- vapply(cap, function(x) as.integer(x[2]), integer(1))
+    } else {
+      m4 <- regexpr("\\d{4}", pool)
+      yr <- rep(NA_integer_, length(pool))
+      yr[m4 > 0] <- as.integer(regmatches(pool, m4))
+    }
+    mo <- rep(NA_integer_, length(pool))
+    if (pr$has_month)
+      mo <- vapply(cap, function(x) as.integer(x[if (pr$has_year) 3L else 2L]),
+                   integer(1))
+    keep <- !is.na(yr)
+    if (!is.null(years)) keep <- keep & yr %in% years
+    if (pr$has_month)    keep <- keep & (is.na(mo) | mo %in% months)
+    if (!any(keep)) return(NULL)
+    data.frame(file = file.path(path, pool[keep]), year = yr[keep],
+               month = mo[keep], stringsAsFactors = FALSE)
+  }
+
+  file_ix <- stats::setNames(lapply(variables, files_for), variables)
+
   if (is.null(years)) {
-    all_nc <- list.files(path, pattern = "\\.nc$")
-    yrs <- lapply(variables, function(v) {
-      re <- gsub("%02d", "(\\\\d{2})",
-                 gsub("%d", "(\\\\d{4})",
-                      gsub("%s", gsub("([.\\\\+*?\\[^\\]$(){}|])", "\\\\\\1", v),
-                           file_template)))
-      hit <- grep(paste0("^", re, "$"), all_nc, value = TRUE)
-      as.integer(sub(paste0("^", re, "$"), "\\1", hit))
-    })
-    years <- sort(unique(Reduce(union, yrs)))
-    years <- years[!is.na(years)]
+    years <- sort(unique(unlist(lapply(file_ix, `[[`, "year"))))
     if (!length(years))
-      stop("No files matching '", file_template, "' found in ", path)
-    say("Years found on disk: ", paste(range(years), collapse = "-"))
+      stop("No files matching pattern '", pattern, "' (with a 4-digit year) ",
+           "found in ", path, ".")
+    say("Years on disk: ", paste(range(years), collapse = "-"))
   }
 
   ## ---- build (ix, iy, weight) for a grid, given the chosen method -----
@@ -222,13 +290,22 @@ extract_era5_hourly_met <- function(path,
     dlat <- stats::median(abs(diff(sort(latv))))
     ok <- function(ix, iy) if (is.null(valid)) TRUE else isTRUE(valid[ix, iy])
 
-    ## nearest valid grid node to (lon, lat)
+    ## nearest valid grid node to (lon, lat), with a distance report / cap
     nearest_valid <- function() {
       gi <- expand.grid(ix = seq_along(lonv), iy = seq_along(latv))
       if (!is.null(valid)) gi <- gi[valid[cbind(gi$ix, gi$iy)] %in% TRUE, ]
-      if (!nrow(gi)) stop("No valid ERA5 land cells near this location.")
-      d2 <- (lonv[gi$ix] - lon)^2 + (latv[gi$iy] - lat)^2
-      k  <- which.min(d2)
+      if (!nrow(gi)) stop("No valid ERA5 land cells anywhere in the grid.")
+      coslat <- cos(lat * pi / 180)
+      dkm <- 111.195 * sqrt((latv[gi$iy] - lat)^2 +
+                            ((lonv[gi$ix] - lon) * coslat)^2)
+      k <- which.min(dkm)
+      say(sprintf("  nearest valid ERA5 cell is %.1f km from (%.4f, %.4f)",
+                  dkm[k], lon, lat))
+      if (is.finite(max_dist_km) && dkm[k] > max_dist_km)
+        stop(sprintf(paste0("Nearest valid ERA5 cell is %.1f km from (%.4f, ",
+                            "%.4f), beyond max_dist_km = %g. Check lon/lat / ",
+                            "the data region, or raise max_dist_km."),
+                     dkm[k], lon, lat, max_dist_km))
       data.frame(ix = gi$ix[k], iy = gi$iy[k], w = 1)
     }
 
@@ -282,8 +359,63 @@ extract_era5_hourly_met <- function(path,
     data.frame(ix = grd$ix[hit], iy = grd$iy[hit], w = w)
   }
 
+  ## NA-aware weighted mean over the cells in `W` of a [lon, lat, time]
+  ## array `slab` (indices in `W` are offset by `i0`, `j0`): a cell that is
+  ## NA at some step drops out and the remaining weights are renormalised.
+  collapse_slab <- function(slab, W, i0 = 1L, j0 = 1L) {
+    nt <- dim(slab)[3]
+    num <- numeric(nt); den <- numeric(nt)
+    for (k in seq_len(nrow(W))) {
+      x  <- slab[W$ix[k] - i0 + 1, W$iy[k] - j0 + 1, ]
+      ok <- !is.na(x)
+      num[ok] <- num[ok] + W$w[k] * x[ok]
+      den[ok] <- den[ok] + W$w[k]
+    }
+    ifelse(den > 0, num / den, NA_real_)
+  }
+
+  ## ---- grid axes + a validity mask (cells carrying data at step 1) ----
+  grid_info <- function(file, nc_candidates) {
+    if (era5_fmt(file) == "grib") {
+      req_pkg("terra")
+      r   <- terra::rast(file)
+      lon <- as.numeric(terra::xFromCol(r, seq_len(terra::ncol(r))))
+      lat <- as.numeric(terra::yFromRow(r, seq_len(terra::nrow(r))))
+      m1  <- terra::as.array(r[[1]])[, , 1]                    # [lat, lon]
+      return(list(lon = lon, lat = lat, mask = t(!is.na(m1)))) # [nlon, nlat]
+    }
+    req_pkg("ncdf4")
+    nc <- ncdf4::nc_open(file); on.exit(ncdf4::nc_close(nc), add = TRUE)
+    lon <- nc$dim[[if ("longitude" %in% names(nc$dim)) "longitude" else "lon"]]$vals
+    lat <- nc$dim[[if ("latitude"  %in% names(nc$dim)) "latitude"  else "lat"]]$vals
+    vn  <- intersect(nc_candidates, names(nc$var))
+    if (!length(vn))
+      vn <- setdiff(names(nc$var),
+                    c("crs", "number", "expver", "spatial_ref"))[1]
+    mask <- !is.na(ncdf4::ncvar_get(nc, vn[1], start = c(1, 1, 1),
+                                    count = c(-1, -1, 1)))     # [nlon, nlat]
+    list(lon = lon, lat = lat, mask = mask)
+  }
+
   ## ---- read one file, collapse to the weighted point series ----------
   read_file <- function(file, nc_candidates, W) {
+    if (era5_fmt(file) == "grib") read_file_grib(file, W)
+    else                          read_file_nc(file, nc_candidates, W)
+  }
+
+  read_file_grib <- function(file, W) {
+    req_pkg("terra")
+    r  <- terra::rast(file)
+    tt <- as.POSIXct(terra::time(r), tz = "UTC")
+    if (anyNA(tt) || (terra::nlyr(r) > 1L && length(unique(tt)) == 1L))
+      stop("Could not read per-step time stamps from GRIB file ", file,
+           " - is this a valid ERA5 GRIB?")
+    slab <- aperm(terra::as.array(r), c(2, 1, 3))  # [lat,lon,time] -> [lon,lat,time]
+    val  <- collapse_slab(slab, W)
+    data.frame(time_utc = tt, value = as.numeric(val))
+  }
+
+  read_file_nc <- function(file, nc_candidates, W) {
     nc <- ncdf4::nc_open(file); on.exit(ncdf4::nc_close(nc), add = TRUE)
     vn <- intersect(nc_candidates, names(nc$var))
     if (!length(vn)) {
@@ -308,16 +440,7 @@ extract_era5_hourly_met <- function(path,
     slab <- ncdf4::ncvar_get(nc, vn, start = c(i0, j0, 1),
                              count = c(di, dj, -1))               # [lon,lat,time]
     dim(slab) <- c(di, dj, length(tt))
-    ## NA-aware weighted mean: a cell that is NA at some step drops out and
-    ## the remaining weights are renormalised for that step.
-    num <- numeric(length(tt)); den <- numeric(length(tt))
-    for (k in seq_len(nrow(W))) {
-      x  <- slab[W$ix[k] - i0 + 1, W$iy[k] - j0 + 1, ]
-      ok <- !is.na(x)
-      num[ok] <- num[ok] + W$w[k] * x[ok]
-      den[ok] <- den[ok] + W$w[k]
-    }
-    val <- ifelse(den > 0, num / den, NA_real_)
+    val <- collapse_slab(slab, W, i0, j0)
     data.frame(time_utc = tt, value = as.numeric(val))
   }
 
@@ -325,21 +448,14 @@ extract_era5_hourly_met <- function(path,
   wcache <- list()
   series <- list()
   for (v in variables) {
-    files <- unlist(lapply(years, function(y)
-      Filter(file.exists, vapply(months, function(m) fname(v, y, m), character(1)))))
+    fi    <- file_ix[[v]]
+    files <- if (is.null(fi)) character(0)
+             else fi$file[order(fi$year, fi$month)]
     if (!length(files)) { say("  ", v, ": no files - skipped"); next }
 
     ## weights from this variable's grid (cache per grid signature)
-    nc1  <- ncdf4::nc_open(files[1])
-    lonv <- nc1$dim[[if ("longitude" %in% names(nc1$dim)) "longitude" else "lon"]]$vals
-    latv <- nc1$dim[[if ("latitude"  %in% names(nc1$dim)) "latitude"  else "lat"]]$vals
-    vn1  <- intersect(ref[[v]]$nc, names(nc1$var))
-    if (!length(vn1))
-      vn1 <- setdiff(names(nc1$var),
-                     c("crs", "number", "expver", "spatial_ref"))[1]
-    vmask <- !is.na(ncdf4::ncvar_get(nc1, vn1[1], start = c(1, 1, 1),
-                                     count = c(-1, -1, 1)))       # [nlon, nlat]
-    ncdf4::nc_close(nc1)
+    gi   <- grid_info(files[1], ref[[v]]$nc)
+    lonv <- gi$lon; latv <- gi$lat; vmask <- gi$mask
     key <- paste(length(lonv), length(latv), signif(lonv[1], 8), signif(latv[1], 8))
     if (is.null(wcache[[key]]))
       wcache[[key]] <- make_weights(lonv, latv, valid = vmask)

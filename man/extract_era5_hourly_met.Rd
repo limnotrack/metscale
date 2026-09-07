@@ -20,7 +20,8 @@ extract_era5_hourly_met(
   format = c("AEME", "LER", "raw"),
   precip_units = c("mm/hr", "m/day", "mm/day", "m/hr"),
   pressure_units = c("Pa", "hPa"),
-  file_template = "nz_era5-land_\%d_\%02d_\%s_daily.nc",
+  pattern = "{variable}",
+  max_dist_km = 50,
   area_crs = 2193,
   outfile = NULL,
   fill_gaps = TRUE,
@@ -28,7 +29,7 @@ extract_era5_hourly_met(
 )
 }
 \arguments{
-\item{path}{directory holding the ERA5-Land netCDF files.}
+\item{path}{directory holding the ERA5-Land files (netCDF or GRIB).}
 
 \item{lon, lat}{point of interest, decimal degrees (WGS84). Ignored if
 \code{geom} is supplied.}
@@ -60,9 +61,22 @@ names) or \code{"raw"} (ERA5 short names).}
 
 \item{pressure_units}{\code{"Pa"} (default) or \code{"hPa"}.}
 
-\item{file_template}{\code{sprintf()} template for the file names, taking the
-year (integer), month (integer) and ERA5 variable name in that order.
-Default \code{"nz_era5-land_\%d_\%02d_\%s_daily.nc"}.}
+\item{pattern}{file-name template matched (unanchored, case-insensitive
+on the extension) against the names in \code{path}. Understands the tokens
+\code{{variable}} - the ERA5 name such as \verb{2m_temperature}, which also
+matches the short name (\code{t2m}) - \code{{year}} and \code{{month}}, plus \code{*} as a
+wildcard; everything else is literal. \code{{year}} / \code{{month}} are
+optional: include them to pin those fields or to select \code{months};
+with no \code{{year}} token the first 4-digit run in the name is taken as
+the year. Only \code{.nc} / \code{.grib} / \code{.grb} / \code{.grib2} files are
+considered. Default \code{"{variable}"}. Examples: \code{"{year}_{month}_{variable}"},
+\code{"*_{variable}_hourly_{year}_{month}_*"}.}
+
+\item{max_dist_km}{when a \code{"nearest"} sample (or a \code{"nearest"} fallback
+from \code{"bilinear"} / \code{"area"}) is used, the distance from the requested
+point to the chosen ERA5 cell is reported, and an error is raised if
+it exceeds this many kilometres. Default \code{50}; \code{Inf} disables the
+check.}
 
 \item{area_crs}{projected CRS (EPSG code or WKT) used to compute polygon
 intersection areas for \code{method = "area"}. Default \code{2193} (NZTM 2000);
@@ -85,17 +99,25 @@ added when their inputs are present. Attributes \code{lon}, \code{lat},
 \code{method}, \code{tz}, \code{n_cells} describe the extraction.
 }
 \description{
-Reads monthly hourly ERA5-Land netCDF files from \code{path}, pulls a time
-series for a location, de-accumulates the flux variables, converts
-everything to standard lake-model units (\code{\link[=met_vars]{met_vars()}}), shifts the time
-stamps from UTC to \code{tz} and returns a tidy wide data frame ready to be
-written to CSV.
+Reads monthly hourly ERA5-Land files from \code{path} (netCDF, or GRIB as
+downloaded by \code{\link[=download_era5_cds]{download_era5_cds()}}), pulls a time series for a
+location, de-accumulates the flux variables, converts everything to
+standard lake-model units (\code{\link[=met_vars]{met_vars()}}), shifts the time stamps from
+UTC to \code{tz} and returns a tidy wide data frame ready to be written to
+CSV.
 }
 \details{
-Files are located with \code{file_template}, which defaults to the naming the
-LERNZmp download scripts produce,
-\verb{nz_era5-land_<YYYY>_<MM>_<variable>_daily.nc} - note the data are hourly
-despite the \verb{_daily} suffix.
+Files are located by matching \code{pattern} against the file names in
+\code{path}. The default, \code{"{variable}"}, picks up any \code{.nc} / \code{.grib} file
+whose name contains the ERA5 variable name (or its short name) and a
+4-digit year - which covers the output of \code{\link[=download_era5_cds]{download_era5_cds()}} and
+most ad-hoc layouts. Give \code{pattern} explicitly to disambiguate or to
+filter by \code{months}; see the argument description.
+
+The reader backend is chosen per file from its extension: \code{.grib},
+\code{.grb} and \code{.grib2} are read with \pkg{terra}, anything else with
+\pkg{ncdf4}. Each GRIB file is assumed to hold a single ERA5 variable
+across the month, as \code{\link[=download_era5_cds]{download_era5_cds()}} writes them.
 
 The location can be given as
 \itemize{
@@ -138,15 +160,13 @@ already the hourly amount.
 \dontrun{
 ## by coordinate
 met <- extract_era5_hourly_met(
-  path = "download_era5-land/era5_netcdf",
-  lon  = 176.2717, lat = -38.0790, years = 2023:2024)
+  path = "era5_land", lon = 176.2717, lat = -38.0790, years = 2023:2024)
 
-## by lake polygon, area-weighted over every overlapping grid cell
-lakes <- readRDS("gis/lake_shapefile/lernzmp_lakes_master.rds")$updated
-poly  <- lakes[lakes$name_final == "Rotorua", ]
-met   <- extract_era5_hourly_met(
-  path = "download_era5-land/era5_netcdf", geom = poly,
-  method = "area", years = 2023:2024,
+## GRIB from download_era5_cds(), area-weighted over a lake polygon
+poly <- sf::st_read("gis/rotorua.gpkg")
+met  <- extract_era5_hourly_met(
+  path = "era5_cds", geom = poly, method = "area", years = 2023:2024,
+  pattern = "*_{variable}_hourly_{year}_{month}_*",
   outfile = "rotorua_era5_hourly_met.csv")
 }
 }
