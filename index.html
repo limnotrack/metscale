@@ -6,6 +6,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Climate and Meteorological Forcing: Extraction, Bias Correction and Temporal Disaggregation • metscale</title>
+<!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png">
+<link rel="icon" type="”image/svg+xml”" href="favicon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" sizes="any" href="favicon.ico">
+<link rel="manifest" href="site.webmanifest">
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
 <script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
@@ -13,6 +18,7 @@
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Climate and Meteorological Forcing: Extraction, Bias Correction and Temporal Disaggregation">
 <meta name="description" content="Prepare model-ready meteorological forcing from gridded reanalysis and climate projections. Extract hourly meteorology from reanalysis netCDF or GRIB (ERA5-Land) at a point or averaged over a polygon, convert to standard units and a chosen time zone, bias-correct against locally measured observations (monthly scaling, variance scaling, linear regression, empirical or trend-preserving quantile mapping, with leave-one-year-out cross-validation), and temporally disaggregate daily meteorology (including climate-scenario series) to hourly or 3-hourly using an analogue-day method of fragments or a mean diurnal cycle. Works standalone; integrates with the Aquatic Ecosystem Model Ensemble (AEME) when installed, but is not tied to any process model.">
 <meta property="og:description" content="Prepare model-ready meteorological forcing from gridded reanalysis and climate projections. Extract hourly meteorology from reanalysis netCDF or GRIB (ERA5-Land) at a point or averaged over a polygon, convert to standard units and a chosen time zone, bias-correct against locally measured observations (monthly scaling, variance scaling, linear regression, empirical or trend-preserving quantile mapping, with leave-one-year-out cross-validation), and temporally disaggregate daily meteorology (including climate-scenario series) to hourly or 3-hourly using an analogue-day method of fragments or a mean diurnal cycle. Works standalone; integrates with the Aquatic Ecosystem Model Ensemble (AEME) when installed, but is not tied to any process model.">
+<meta property="og:image" content="http://limnotrack.com/metscale/logo.png">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -59,8 +65,10 @@
 </nav><div class="container template-home">
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
-<div class="page-header"><h1 id="metscale">metscale<a class="anchor" aria-label="anchor" href="#metscale"></a>
-</h1></div>
+<div class="page-header">
+<img src="logo.png" class="logo" alt=""><h1 id="metscale">metscale<a class="anchor" aria-label="anchor" href="#metscale"></a>
+</h1>
+</div>
 <!-- badges: start -->
 
 <p>Model-ready meteorological forcing from gridded reanalysis and climate projections, bias-corrected against local observations and temporally disaggregated. <code>metscale</code> covers the meteorological side of process-model forcing without depending on any model: extract, correct, disaggregate, and a set of clean meteorological conversions. It integrates with the Aquatic Ecosystem Model Ensemble (<a href="https://github.com/limnotrack/AEME" class="external-link"><code>AEME</code></a>) when that is installed, but does not require it.</p>
