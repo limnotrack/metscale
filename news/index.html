@@ -61,6 +61,8 @@
 <li>
 <code><a href="../reference/extract_era5_lake_met.html">extract_era5_lake_met()</a></code> now takes a lake polygon (an <code>sf</code>/<code>sfc</code> or a path to one) plus optional <code>id</code> / <code>name</code> labels; the old <code>lakes</code> / <code>layer</code> id-and-name lookup has been removed.</li>
 </ul></li>
+<li>
+<code><a href="../reference/plot_extract_grid.html">plot_extract_grid()</a></code> – a pre-extraction sanity-check map: the ERA5-Land grid around a point or lake polygon, the cell(s) each <code>method</code> would sample shaded by weight, the land/sea mask, and the geometry on top. Run it to catch a mis-projected shapefile or a sign-flipped longitude before extracting. Returns a <code>ggplot</code> (drawn cells attached as an <code>sf</code> on <code>attr(., "grid")</code> for handing to <code>mapview</code> / <code>tmap</code>), or draws with <code><a href="https://r-spatial.github.io/sf/reference/plot.html" class="external-link">sf::plot()</a></code> for <code>engine = "base"</code>. Uses the same file-matching and sampling code as the extractors, so the preview cannot drift from the extraction.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="climate-projections-0-1-0">Climate projections<a class="anchor" aria-label="anchor" href="#climate-projections-0-1-0"></a></h3>
@@ -108,13 +110,13 @@
 <li>
 <code><a href="../articles/download-era5.html">vignette("download-era5")</a></code> – the three ways to acquire ERA5 forcing.</li>
 <li>
-<code><a href="../articles/extract-era5-lake.html">vignette("extract-era5-lake")</a></code> – point vs polygon (lake-average) extraction from ERA5-Land netCDF and the <code>method</code> options.</li>
+<code><a href="../articles/extract-era5-lake.html">vignette("extract-era5-lake")</a></code> – point vs polygon (lake-average) extraction from ERA5-Land netCDF and the <code>method</code> options, with <code><a href="../reference/plot_extract_grid.html">plot_extract_grid()</a></code> worked through for each: a point, the four polygon methods side by side, cells masked by ERA5-Land, and <code>max_dist_km</code>.</li>
 <li>
 <code><a href="../articles/deriving-variables.html">vignette("deriving-variables")</a></code> – fill a minimal set out to everything a lake model needs with <code><a href="../reference/expand_met.html">expand_met()</a></code> and the underlying conversions.</li>
 <li>
 <code><a href="../articles/bias-correction-methods.html">vignette("bias-correction-methods")</a></code> – comparing <code>scale</code> / <code>variance</code> / <code>eqm</code> / <code>qdm</code>, reading the cross-validated skill table, and the present-day vs projection trade-off.</li>
 <li>
-<code><a href="../articles/scenario-workflow.html">vignette("scenario-workflow")</a></code> – the end-to-end bias-correction -&gt; delta-change -&gt; disaggregation pipeline on the bundled Lake Rotorua example data.</li>
+<code><a href="../articles/scenario-workflow.html">vignette("scenario-workflow")</a></code> – the end-to-end bias-correction -&gt; delta-change -&gt; disaggregation pipeline on the bundled Lake Rotorua example data, with an appendix on checking the extraction grid with <code><a href="../reference/plot_extract_grid.html">plot_extract_grid()</a></code>.</li>
 </ul></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

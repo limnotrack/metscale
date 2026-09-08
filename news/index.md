@@ -42,6 +42,16 @@ and the u/v swap in
     now takes a lake polygon (an `sf`/`sfc` or a path to one) plus
     optional `id` / `name` labels; the old `lakes` / `layer` id-and-name
     lookup has been removed.
+- [`plot_extract_grid()`](http://limnotrack.com/metscale/reference/plot_extract_grid.md)
+  – a pre-extraction sanity-check map: the ERA5-Land grid around a point
+  or lake polygon, the cell(s) each `method` would sample shaded by
+  weight, the land/sea mask, and the geometry on top. Run it to catch a
+  mis-projected shapefile or a sign-flipped longitude before extracting.
+  Returns a `ggplot` (drawn cells attached as an `sf` on
+  `attr(., "grid")` for handing to `mapview` / `tmap`), or draws with
+  [`sf::plot()`](https://r-spatial.github.io/sf/reference/plot.html) for
+  `engine = "base"`. Uses the same file-matching and sampling code as
+  the extractors, so the preview cannot drift from the extraction.
 
 ### Climate projections
 
@@ -138,7 +148,10 @@ and the u/v swap in
   – the three ways to acquire ERA5 forcing.
 - [`vignette("extract-era5-lake")`](http://limnotrack.com/metscale/articles/extract-era5-lake.md)
   – point vs polygon (lake-average) extraction from ERA5-Land netCDF and
-  the `method` options.
+  the `method` options, with
+  [`plot_extract_grid()`](http://limnotrack.com/metscale/reference/plot_extract_grid.md)
+  worked through for each: a point, the four polygon methods side by
+  side, cells masked by ERA5-Land, and `max_dist_km`.
 - [`vignette("deriving-variables")`](http://limnotrack.com/metscale/articles/deriving-variables.md)
   – fill a minimal set out to everything a lake model needs with
   [`expand_met()`](http://limnotrack.com/metscale/reference/expand_met.md)
@@ -149,4 +162,6 @@ and the u/v swap in
   trade-off.
 - [`vignette("scenario-workflow")`](http://limnotrack.com/metscale/articles/scenario-workflow.md)
   – the end-to-end bias-correction -\> delta-change -\> disaggregation
-  pipeline on the bundled Lake Rotorua example data.
+  pipeline on the bundled Lake Rotorua example data, with an appendix on
+  checking the extraction grid with
+  [`plot_extract_grid()`](http://limnotrack.com/metscale/reference/plot_extract_grid.md).
