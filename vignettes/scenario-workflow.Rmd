@@ -55,6 +55,12 @@ CMIP6 model (`NorESM2-MM`) cropped to a 3&times;3 grid window and to
 would use a multi-decade reanalysis record and 20-year climate windows; the
 steps are identical.
 
+The hourly ERA5-Land slice was produced by `extract_era5_hourly_met()`
+reading monthly ERA5-Land files. The appendix (*Checking the extraction
+grid*) shows the one-line `plot_extract_grid()` check --- that the lake
+outline sits on the grid cells you expect --- worth running before any
+extraction.
+
 ## 1. Bias-correct hourly ERA5 against the buoy
 
 The buoy anemometer sits at 2 m; `wind_height = 2` rescales it to the 10 m
@@ -398,4 +404,110 @@ transfer function fitted on a few years of observations is asserted to hold
 under a future climate. Use a long reanalysis record and 20-year climate
 windows, prefer `method = "scale"` over quantile mapping for the projected
 baseline, and treat the scenario spread (here `ssp245` vs `ssp585`) as the
-lower bound on uncertainty. See `?scenario_workflow`.
+lower bound on uncertainty. See `?scenario_workflow`. For projections aimed
+at storms, droughts or heatwaves rather than the mean climate, see
+`vignette("climate-extremes")`.
+
+### Why delta-change and not the model output directly
+
+Steps 2--3 warp an observation-anchored baseline with a monthly change
+signal rather than driving the lake model with the CMIP6 series itself. A
+climate model is reliable for the *change* between two of its own climates,
+not for the *absolute* meteorology at a point:
+
+* **Raw model output is biased in absolute terms** --- mean offset, a
+  distorted seasonal cycle, drizzle-heavy rainfall, the wrong wind
+  climatology. A sub-daily lake model responds to absolute forcing levels,
+  so those errors would land straight in stratification, ice and
+  evaporation. Differencing two model climates cancels most of the shared
+  bias and keeps only the part worth trusting.
+* **The corrected baseline carries real weather** --- genuine day-to-day
+  persistence, event structure, inter-variable covariance and a real
+  diurnal cycle, all on actual calendar dates. The future model window is a
+  different draw of internal variability on a 365-day calendar that matches
+  no real sequence. Warping the baseline shifts its statistics while
+  keeping a physically consistent series.
+* **Resolution** --- the lake model needs hourly forcing; the model series
+  here is daily on a coarse grid with no credible sub-daily information.
+  Step 4 borrows the within-day shape from the *corrected* reanalysis
+  instead of inventing it.
+* **Order of operations** --- the reanalysis-to-observation correction is an
+  *absolute-level* adjustment, the delta a *difference or ratio*. Adding a
+  level correction onto a change factor is undefined: correct the baseline
+  first, shift second (`?scenario_workflow`).
+
+### Extremes and storm events
+
+Delta-change rescales the *observed* sequence --- every projected day is a
+real past day plus that month's mean shift, or times its ratio. It cannot
+move a storm onto a different date, change how many wet or calm days a
+month holds, or alter day-to-day variance beyond the single multiplicative
+factor on rainfall and wind. The projected return period of a given daily
+rainfall or wind total is close to the observed one, only nudged; and the
+step-4 disaggregator conserves each daily total while borrowing an observed
+within-day profile, so it does not sharpen sub-daily peaks either.
+
+If extremes are the research question --- flood-driving rainfall, storm
+mixing, heatwave stratification --- the monthly-mean delta is too blunt.
+`vignette("climate-extremes")` works through the alternatives with the same
+bundled data: per-quantile change factors, driving from bias-corrected
+daily model output, and single-event storyline perturbation, plus how to
+diagnose the resulting forcing and feed it to a lake model.
+
+## Appendix --- checking the extraction grid
+
+The hourly ERA5-Land series bias-corrected in step 1
+(`rotorua_era5_hourly_met.csv.gz`) was pulled from monthly ERA5-Land files
+with `extract_era5_hourly_met()` --- for a lake, its wrapper
+`extract_era5_lake_met()`, which averages every grid cell the outline
+overlaps. Before running that it is worth a look at *which* cells the
+outline actually lands on: a shapefile in the wrong projection, a
+longitude on the wrong side of the antimeridian, or a lake smaller than
+one 0.1&deg; cell all show up instantly on a map and silently otherwise.
+
+`plot_extract_grid()` reads the same files the extractor would, draws the
+point or polygon against the grid, and shades the cells the chosen `method`
+would sample --- one cell for `"nearest"`, up to four for `"bilinear"`,
+every overlapping cell for `"area"` / `"area_mean"`, each weighted by its
+share of the intersection. Cells masked out by ERA5-Land (sea, or the lake
+pixels themselves) are outlined in dashed blue and dropped, their weight
+spread over the rest.
+
+```{r grid-fixture, include = FALSE}
+## ERA5-Land is a regular 0.1-degree grid. The package ships only the
+## extracted series, not the source netCDF, so synthesise a bare grid over
+## the lake for this illustration; against real ERA5-Land files on disk the
+## call below is exactly the same.
+have_grid <- requireNamespace("ncdf4", quietly = TRUE) &&
+             requireNamespace("sf", quietly = TRUE)
+if (have_grid) {
+  grid_dir <- file.path(tempdir(), "era5_land_grid")
+  dir.create(grid_dir, showWarnings = FALSE)
+  lon_ax <- seq(175.9, 176.7, by = 0.1)
+  lat_ax <- seq(-38.35, -37.75, by = 0.1)
+  secs   <- as.numeric(as.POSIXct(c("2024-01-01 00:00", "2024-01-01 01:00"),
+                                  tz = "UTC"))
+  ld <- ncdf4::ncdim_def("longitude",  "degrees_east",  lon_ax)
+  bd <- ncdf4::ncdim_def("latitude",   "degrees_north", lat_ax)
+  vd <- ncdf4::ncdim_def("valid_time", "seconds since 1970-01-01 00:00:00", secs)
+  vv <- ncdf4::ncvar_def("t2m", "K", list(ld, bd, vd), missval = -9999)
+  nc <- ncdf4::nc_create(
+    file.path(grid_dir, "era5-land_2024_01_2m_temperature.nc"), list(vv))
+  ncdf4::ncvar_put(nc, vv,
+                   array(288, c(length(lon_ax), length(lat_ax), length(secs))))
+  ncdf4::nc_close(nc)
+}
+```
+
+```{r grid-check, eval = have_grid, fig.height = 4, fig.cap = "**Figure 8.** The Lake Rotorua outline (red, centroid crossed) on the ERA5-Land 0.1&deg; grid. `method = \"area\"` samples the four cells the polygon overlaps and weights each by its share of the intersection (legend) --- so the extracted lake series is that area-weighted average. Grey dots are cell centres. Here the outline is correctly placed and spans a sensible 2&times;2 block; a projection or coordinate mistake would put it somewhere else entirely."}
+lake <- readRDS(file.path(ex, "rotorua_lake_shape.rds"))
+
+plot_extract_grid(grid_dir, geom = lake, method = "area")
+```
+
+`plot_extract_grid()` returns a `ggplot`, so it takes further `+` layers,
+and it carries the drawn cells as an `sf` on `attr(., "grid")` (columns
+`ix`, `iy`, `weight`, `selected`, `land`) --- hand that to `mapview` or
+`tmap` for an interactive check against a basemap without either becoming a
+package dependency. Pass `engine = "base"` for a dependency-free
+`sf::plot()` version.
