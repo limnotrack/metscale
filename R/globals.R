@@ -3,5 +3,7 @@ utils::globalVariables(c(
   "DateTime",
   "aeme",
   "era5",
-  "era5_ref_table"
+  "era5_ref_table",
+  # plot_extract_grid(): ggplot2 aes() column
+  "weight"
 ))

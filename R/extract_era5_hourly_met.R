@@ -154,125 +154,30 @@ extract_era5_hourly_met <- function(path,
   say <- function(...) if (isTRUE(verbose)) message(...)
 
   ## Backend is chosen per file from its extension: GRIB (.grib/.grb/.grib2)
-  ## is read with 'terra', everything else with 'ncdf4'.
-  era5_fmt <- function(f) {
-    ext <- tolower(tools::file_ext(f))
-    if (ext %in% c("grib", "grb", "grib2", "grb2")) "grib" else "nc"
-  }
-  req_pkg <- function(p)
-    if (!requireNamespace(p, quietly = TRUE))
-      stop("Package '", p, "' is required to read these ERA5 files.",
-           call. = FALSE)
+  ## is read with 'terra', everything else with 'ncdf4'. (see R/era5_grid.R)
+  era5_fmt <- .era5_fmt
+  req_pkg  <- .era5_req_pkg
 
   ## ---- resolve location to WGS84 point + optional polygon --------------
-  poly_ll <- NULL
-  if (!is.null(geom)) {
-    if (!requireNamespace("sf", quietly = TRUE))
-      stop("Package 'sf' is required when 'geom' is supplied.")
-    g <- sf::st_geometry(sf::st_as_sf(geom))
-    if (is.na(sf::st_crs(g))) stop("'geom' has no CRS.")
-    if (length(g) > 1) g <- sf::st_union(g)
-    gtype <- as.character(sf::st_geometry_type(g, by_geometry = FALSE))
-    ## centroid in the geometry's own (projected) CRS, then to lon/lat
-    ctr <- sf::st_coordinates(sf::st_transform(sf::st_centroid(g), 4326))
-    lon <- ctr[1, 1]; lat <- ctr[1, 2]
-    if (grepl("POLYGON", gtype)) poly_ll <- sf::st_transform(g, 4326)
-  }
-  if (is.null(lon) || is.null(lat))
-    stop("Supply either 'lon'/'lat' or 'geom'.")
+  loc     <- .era5_resolve_location(lon, lat, geom)
+  lon     <- loc$lon
+  lat     <- loc$lat
+  poly_ll <- loc$poly_ll
   if (method %in% c("area", "area_mean") && is.null(poly_ll)) {
     say("method '", method, "' needs a polygon - falling back to 'bilinear'")
     method <- "bilinear"
   }
 
   ## ---- variable lookup (ERA5 name -> nc names / role / target names) --
-  ref <- list(
-    "2m_temperature"          = list(nc = c("t2m", "2t"),  role = "temp_k",
-                                     aeme = "MET_tmpair",
-                                     ler  = "Air_Temperature_celsius"),
-    "2m_dewpoint_temperature" = list(nc = c("d2m", "2d"),  role = "temp_k",
-                                     aeme = "MET_tmpdew",
-                                     ler  = "Dewpoint_Temperature_celsius"),
-    "10m_u_component_of_wind" = list(nc = c("u10", "10u"), role = "linear",
-                                     aeme = "MET_wnduvu",
-                                     ler  = "Ten_Meter_Uwind_vector_meterPerSecond"),
-    "10m_v_component_of_wind" = list(nc = c("v10", "10v"), role = "linear",
-                                     aeme = "MET_wnduvv",
-                                     ler  = "Ten_Meter_Vwind_vector_meterPerSecond"),
-    "surface_solar_radiation_downwards"   = list(nc = "ssrd", role = "accum_flux",
-                                     aeme = "MET_radswd",
-                                     ler  = "Shortwave_Radiation_Downwelling_wattPerMeterSquared"),
-    "surface_thermal_radiation_downwards" = list(nc = "strd", role = "accum_flux",
-                                     aeme = "MET_radlwd",
-                                     ler  = "Longwave_Radiation_Downwelling_wattPerMeterSquared"),
-    "total_precipitation"     = list(nc = "tp", role = "accum_depth",
-                                     aeme = "MET_pprain",
-                                     ler  = "Precipitation_millimeterPerHour"),
-    "snowfall"                = list(nc = "sf", role = "accum_depth",
-                                     aeme = "MET_ppsnow",
-                                     ler  = "Snowfall_millimeterPerHour"),
-    "surface_pressure"        = list(nc = "sp", role = "pressure",
-                                     aeme = "MET_prsttn",
-                                     ler  = "Surface_Level_Barometric_Pressure_pascal")
-  )
+  ref <- .era5_ref                                    # see R/era5_grid.R
   unknown <- setdiff(variables, names(ref))
   if (length(unknown))
     stop("Unsupported variable(s): ", paste(unknown, collapse = ", "))
 
   ## ---- locate files by matching `pattern` against names in `path` -------
-  ## `pattern` carries the tokens {variable} / {year} / {month} and `*`
-  ## wildcards; it is turned into a regex and matched unanchored against
-  ## each met-extension file name. {variable} also matches the ERA5 short
-  ## name(s); {year} / {month} pin and enable filtering on those fields,
-  ## and with no {year} token the first 4-digit run is taken as the year.
-  esc_rx <- function(s) gsub("([][{}().+*?^$|\\\\-])", "\\\\\\1", s)
-  var_alts <- function(v) {
-    sn <- ref[[v]]$nc
-    sn <- ifelse(nchar(sn) <= 3L, paste0("\\b", esc_rx(sn), "\\b"), esc_rx(sn))
-    paste0("(?:", paste(c(esc_rx(v), sn), collapse = "|"), ")")
-  }
-  pattern_rx <- function(v) {
-    toks <- regmatches(pattern, gregexpr(
-      "\\{variable\\}|\\{year\\}|\\{month\\}|\\*|[^{}*]+", pattern))[[1]]
-    ny <- 0L; nm <- 0L
-    body <- vapply(toks, function(p) switch(p,
-      "{variable}" = var_alts(v),
-      "{year}"  = { ny <<- ny + 1L; if (ny == 1L) "(\\d{4})"   else "\\d{4}" },
-      "{month}" = { nm <<- nm + 1L; if (nm == 1L) "(\\d{1,2})" else "\\d{1,2}" },
-      "*"       = ".*",
-      esc_rx(p)), character(1), USE.NAMES = FALSE)
-    list(rx = paste(body, collapse = ""), has_year = ny > 0L, has_month = nm > 0L)
-  }
-
-  pool <- list.files(path)
-  pool <- pool[grepl("\\.(nc|grib|grib2|grb|grb2)$", pool, ignore.case = TRUE)]
-
-  files_for <- function(v) {
-    pr  <- pattern_rx(v)
-    cap <- regmatches(pool, regexec(pr$rx, pool, perl = TRUE))
-    hit <- lengths(cap) > 0
-    if (!any(hit)) return(NULL)
-    pool <- pool[hit]; cap <- cap[hit]
-    if (pr$has_year) {
-      yr <- vapply(cap, function(x) as.integer(x[2]), integer(1))
-    } else {
-      m4 <- regexpr("\\d{4}", pool)
-      yr <- rep(NA_integer_, length(pool))
-      yr[m4 > 0] <- as.integer(regmatches(pool, m4))
-    }
-    mo <- rep(NA_integer_, length(pool))
-    if (pr$has_month)
-      mo <- vapply(cap, function(x) as.integer(x[if (pr$has_year) 3L else 2L]),
-                   integer(1))
-    keep <- !is.na(yr)
-    if (!is.null(years)) keep <- keep & yr %in% years
-    if (pr$has_month)    keep <- keep & (is.na(mo) | mo %in% months)
-    if (!any(keep)) return(NULL)
-    data.frame(file = file.path(path, pool[keep]), year = yr[keep],
-               month = mo[keep], stringsAsFactors = FALSE)
-  }
-
-  file_ix <- stats::setNames(lapply(variables, files_for), variables)
+  ## Pattern tokens {variable} / {year} / {month} and `*`; see
+  ## .era5_locate_files() in R/era5_grid.R.
+  file_ix <- .era5_locate_files(path, pattern, variables, years, months)
 
   if (is.null(years)) {
     years <- sort(unique(unlist(lapply(file_ix, `[[`, "year"))))
@@ -285,79 +190,11 @@ extract_era5_hourly_met <- function(path,
   ## ---- build (ix, iy, weight) for a grid, given the chosen method -----
   ## `valid` is an optional [nlon, nlat] logical mask of cells that carry
   ## data (ERA5-Land masks the sea and, often, lake pixels themselves).
-  make_weights <- function(lonv, latv, valid = NULL) {
-    dlon <- stats::median(diff(sort(lonv)))
-    dlat <- stats::median(abs(diff(sort(latv))))
-    ok <- function(ix, iy) if (is.null(valid)) TRUE else isTRUE(valid[ix, iy])
-
-    ## nearest valid grid node to (lon, lat), with a distance report / cap
-    nearest_valid <- function() {
-      gi <- expand.grid(ix = seq_along(lonv), iy = seq_along(latv))
-      if (!is.null(valid)) gi <- gi[valid[cbind(gi$ix, gi$iy)] %in% TRUE, ]
-      if (!nrow(gi)) stop("No valid ERA5 land cells anywhere in the grid.")
-      coslat <- cos(lat * pi / 180)
-      dkm <- 111.195 * sqrt((latv[gi$iy] - lat)^2 +
-                            ((lonv[gi$ix] - lon) * coslat)^2)
-      k <- which.min(dkm)
-      say(sprintf("  nearest valid ERA5 cell is %.1f km from (%.4f, %.4f)",
-                  dkm[k], lon, lat))
-      if (is.finite(max_dist_km) && dkm[k] > max_dist_km)
-        stop(sprintf(paste0("Nearest valid ERA5 cell is %.1f km from (%.4f, ",
-                            "%.4f), beyond max_dist_km = %g. Check lon/lat / ",
-                            "the data region, or raise max_dist_km."),
-                     dkm[k], lon, lat, max_dist_km))
-      data.frame(ix = gi$ix[k], iy = gi$iy[k], w = 1)
-    }
-
-    if (method == "nearest") return(nearest_valid())
-
-    if (method == "bilinear") {
-      ox <- order(lonv); oy <- order(latv)
-      lons <- lonv[ox]; lats <- latv[oy]
-      i <- findInterval(lon, lons, all.inside = TRUE)
-      j <- findInterval(lat, lats, all.inside = TRUE)
-      tx <- (lon - lons[i]) / (lons[i + 1] - lons[i])
-      ty <- (lat - lats[j]) / (lats[j + 1] - lats[j])
-      W <- data.frame(
-        ix = c(ox[i], ox[i + 1], ox[i], ox[i + 1]),
-        iy = c(oy[j], oy[j], oy[j + 1], oy[j + 1]),
-        w  = c((1 - tx) * (1 - ty), tx * (1 - ty),
-               (1 - tx) * ty,       tx * ty))
-      keep <- mapply(ok, W$ix, W$iy)
-      if (!any(keep)) return(nearest_valid())          # all corners masked
-      W <- W[keep, ]; W$w <- W$w / sum(W$w)            # renormalise
-      return(W)
-    }
-
-    ## ---- area / area_mean : intersect grid cells with the polygon ----
-    bb  <- sf::st_bbox(poly_ll)
-    inx <- which(lonv >= bb["xmin"] - dlon & lonv <= bb["xmax"] + dlon)
-    iny <- which(latv >= bb["ymin"] - dlat & latv <= bb["ymax"] + dlat)
-    grd <- expand.grid(ix = inx, iy = iny)
-    cells <- lapply(seq_len(nrow(grd)), function(k) {
-      cx <- lonv[grd$ix[k]]; cy <- latv[grd$iy[k]]
-      sf::st_polygon(list(rbind(
-        c(cx - dlon / 2, cy - dlat / 2), c(cx + dlon / 2, cy - dlat / 2),
-        c(cx + dlon / 2, cy + dlat / 2), c(cx - dlon / 2, cy + dlat / 2),
-        c(cx - dlon / 2, cy - dlat / 2))))
-    })
-    cells_nztm <- sf::st_transform(sf::st_sfc(cells, crs = 4326), area_crs)
-    poly_nztm  <- sf::st_union(sf::st_transform(poly_ll, area_crs))
-    hit <- which(lengths(sf::st_intersects(cells_nztm, poly_nztm)) > 0)
-    a <- vapply(hit, function(k) {
-      gi <- suppressWarnings(sf::st_intersection(cells_nztm[k], poly_nztm))
-      if (length(gi) == 0) 0 else as.numeric(sum(sf::st_area(gi)))
-    }, numeric(1))
-    hit <- hit[a > 0]; a <- a[a > 0]
-    keep <- mapply(ok, grd$ix[hit], grd$iy[hit])       # drop masked cells
-    hit <- hit[keep]; a <- a[keep]
-    if (!length(hit)) {                                # nothing usable
-      say("  polygon overlaps no valid ERA5 cell - using nearest valid node")
-      return(nearest_valid())
-    }
-    w <- if (method == "area_mean") rep(1 / length(a), length(a)) else a / sum(a)
-    data.frame(ix = grd$ix[hit], iy = grd$iy[hit], w = w)
-  }
+  ## Spatial sampling lives in .era5_make_weights() (R/era5_grid.R).
+  make_weights <- function(lonv, latv, valid = NULL)
+    .era5_make_weights(lonv, latv, valid, method = method, lon = lon, lat = lat,
+                       poly_ll = poly_ll, area_crs = area_crs,
+                       max_dist_km = max_dist_km, say = say)
 
   ## NA-aware weighted mean over the cells in `W` of a [lon, lat, time]
   ## array `slab` (indices in `W` are offset by `i0`, `j0`): a cell that is
@@ -375,27 +212,7 @@ extract_era5_hourly_met <- function(path,
   }
 
   ## ---- grid axes + a validity mask (cells carrying data at step 1) ----
-  grid_info <- function(file, nc_candidates) {
-    if (era5_fmt(file) == "grib") {
-      req_pkg("terra")
-      r   <- terra::rast(file)
-      lon <- as.numeric(terra::xFromCol(r, seq_len(terra::ncol(r))))
-      lat <- as.numeric(terra::yFromRow(r, seq_len(terra::nrow(r))))
-      m1  <- terra::as.array(r[[1]])[, , 1]                    # [lat, lon]
-      return(list(lon = lon, lat = lat, mask = t(!is.na(m1)))) # [nlon, nlat]
-    }
-    req_pkg("ncdf4")
-    nc <- ncdf4::nc_open(file); on.exit(ncdf4::nc_close(nc), add = TRUE)
-    lon <- nc$dim[[if ("longitude" %in% names(nc$dim)) "longitude" else "lon"]]$vals
-    lat <- nc$dim[[if ("latitude"  %in% names(nc$dim)) "latitude"  else "lat"]]$vals
-    vn  <- intersect(nc_candidates, names(nc$var))
-    if (!length(vn))
-      vn <- setdiff(names(nc$var),
-                    c("crs", "number", "expver", "spatial_ref"))[1]
-    mask <- !is.na(ncdf4::ncvar_get(nc, vn[1], start = c(1, 1, 1),
-                                    count = c(-1, -1, 1)))     # [nlon, nlat]
-    list(lon = lon, lat = lat, mask = mask)
-  }
+  grid_info <- .era5_grid_info                          # see R/era5_grid.R
 
   ## ---- read one file, collapse to the weighted point series ----------
   read_file <- function(file, nc_candidates, W) {
