@@ -4,6 +4,8 @@
 
 - [Choosing a bias-correction
   method](http://limnotrack.com/metscale/articles/bias-correction-methods.md):
+- [Climate extremes as impact-model
+  forcing](http://limnotrack.com/metscale/articles/climate-extremes.md):
 - [Deriving a complete met
   set](http://limnotrack.com/metscale/articles/deriving-variables.md):
 - [Download ERA5

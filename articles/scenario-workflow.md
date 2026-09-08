@@ -43,6 +43,14 @@ window and to 2005–2014 (historical) plus 2090–2099 (`ssp245`,
 `ssp585`). A production run would use a multi-decade reanalysis record
 and 20-year climate windows; the steps are identical.
 
+The hourly ERA5-Land slice was produced by
+[`extract_era5_hourly_met()`](http://limnotrack.com/metscale/reference/extract_era5_hourly_met.md)
+reading monthly ERA5-Land files. The appendix (*Checking the extraction
+grid*) shows the one-line
+[`plot_extract_grid()`](http://limnotrack.com/metscale/reference/plot_extract_grid.md)
+check — that the lake outline sits on the grid cells you expect — worth
+running before any extraction.
+
 ## 1. Bias-correct hourly ERA5 against the buoy
 
 The buoy anemometer sits at 2 m; `wind_height = 2` rescales it to the 10
@@ -525,3 +533,111 @@ climate windows, prefer `method = "scale"` over quantile mapping for the
 projected baseline, and treat the scenario spread (here `ssp245` vs
 `ssp585`) as the lower bound on uncertainty. See
 [`?scenario_workflow`](http://limnotrack.com/metscale/reference/scenario_workflow.md).
+For projections aimed at storms, droughts or heatwaves rather than the
+mean climate, see
+[`vignette("climate-extremes")`](http://limnotrack.com/metscale/articles/climate-extremes.md).
+
+### Why delta-change and not the model output directly
+
+Steps 2–3 warp an observation-anchored baseline with a monthly change
+signal rather than driving the lake model with the CMIP6 series itself.
+A climate model is reliable for the *change* between two of its own
+climates, not for the *absolute* meteorology at a point:
+
+- **Raw model output is biased in absolute terms** — mean offset, a
+  distorted seasonal cycle, drizzle-heavy rainfall, the wrong wind
+  climatology. A sub-daily lake model responds to absolute forcing
+  levels, so those errors would land straight in stratification, ice and
+  evaporation. Differencing two model climates cancels most of the
+  shared bias and keeps only the part worth trusting.
+- **The corrected baseline carries real weather** — genuine day-to-day
+  persistence, event structure, inter-variable covariance and a real
+  diurnal cycle, all on actual calendar dates. The future model window
+  is a different draw of internal variability on a 365-day calendar that
+  matches no real sequence. Warping the baseline shifts its statistics
+  while keeping a physically consistent series.
+- **Resolution** — the lake model needs hourly forcing; the model series
+  here is daily on a coarse grid with no credible sub-daily information.
+  Step 4 borrows the within-day shape from the *corrected* reanalysis
+  instead of inventing it.
+- **Order of operations** — the reanalysis-to-observation correction is
+  an *absolute-level* adjustment, the delta a *difference or ratio*.
+  Adding a level correction onto a change factor is undefined: correct
+  the baseline first, shift second
+  ([`?scenario_workflow`](http://limnotrack.com/metscale/reference/scenario_workflow.md)).
+
+### Extremes and storm events
+
+Delta-change rescales the *observed* sequence — every projected day is a
+real past day plus that month’s mean shift, or times its ratio. It
+cannot move a storm onto a different date, change how many wet or calm
+days a month holds, or alter day-to-day variance beyond the single
+multiplicative factor on rainfall and wind. The projected return period
+of a given daily rainfall or wind total is close to the observed one,
+only nudged; and the step-4 disaggregator conserves each daily total
+while borrowing an observed within-day profile, so it does not sharpen
+sub-daily peaks either.
+
+If extremes are the research question — flood-driving rainfall, storm
+mixing, heatwave stratification — the monthly-mean delta is too blunt.
+[`vignette("climate-extremes")`](http://limnotrack.com/metscale/articles/climate-extremes.md)
+works through the alternatives with the same bundled data: per-quantile
+change factors, driving from bias-corrected daily model output, and
+single-event storyline perturbation, plus how to diagnose the resulting
+forcing and feed it to a lake model.
+
+## Appendix — checking the extraction grid
+
+The hourly ERA5-Land series bias-corrected in step 1
+(`rotorua_era5_hourly_met.csv.gz`) was pulled from monthly ERA5-Land
+files with
+[`extract_era5_hourly_met()`](http://limnotrack.com/metscale/reference/extract_era5_hourly_met.md)
+— for a lake, its wrapper
+[`extract_era5_lake_met()`](http://limnotrack.com/metscale/reference/extract_era5_lake_met.md),
+which averages every grid cell the outline overlaps. Before running that
+it is worth a look at *which* cells the outline actually lands on: a
+shapefile in the wrong projection, a longitude on the wrong side of the
+antimeridian, or a lake smaller than one 0.1° cell all show up instantly
+on a map and silently otherwise.
+
+[`plot_extract_grid()`](http://limnotrack.com/metscale/reference/plot_extract_grid.md)
+reads the same files the extractor would, draws the point or polygon
+against the grid, and shades the cells the chosen `method` would sample
+— one cell for `"nearest"`, up to four for `"bilinear"`, every
+overlapping cell for `"area"` / `"area_mean"`, each weighted by its
+share of the intersection. Cells masked out by ERA5-Land (sea, or the
+lake pixels themselves) are outlined in dashed blue and dropped, their
+weight spread over the rest.
+
+``` r
+
+lake <- readRDS(file.path(ex, "rotorua_lake_shape.rds"))
+
+plot_extract_grid(grid_dir, geom = lake, method = "area")
+```
+
+![\*\*Figure 8.\*\* The Lake Rotorua outline (red, centroid crossed) on
+the ERA5-Land 0.1&deg; grid. \`method = "area"\` samples the four cells
+the polygon overlaps and weights each by its share of the intersection
+(legend) --- so the extracted lake series is that area-weighted average.
+Grey dots are cell centres. Here the outline is correctly placed and
+spans a sensible 2&times;2 block; a projection or coordinate mistake
+would put it somewhere else
+entirely.](scenario-workflow_files/figure-html/grid-check-1.png)
+
+**Figure 8.** The Lake Rotorua outline (red, centroid crossed) on the
+ERA5-Land 0.1° grid. `method = "area"` samples the four cells the
+polygon overlaps and weights each by its share of the intersection
+(legend) — so the extracted lake series is that area-weighted average.
+Grey dots are cell centres. Here the outline is correctly placed and
+spans a sensible 2×2 block; a projection or coordinate mistake would put
+it somewhere else entirely.
+
+[`plot_extract_grid()`](http://limnotrack.com/metscale/reference/plot_extract_grid.md)
+returns a `ggplot`, so it takes further `+` layers, and it carries the
+drawn cells as an `sf` on `attr(., "grid")` (columns `ix`, `iy`,
+`weight`, `selected`, `land`) — hand that to `mapview` or `tmap` for an
+interactive check against a basemap without either becoming a package
+dependency. Pass `engine = "base"` for a dependency-free
+[`sf::plot()`](https://r-spatial.github.io/sf/reference/plot.html)
+version.

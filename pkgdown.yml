@@ -3,12 +3,13 @@ pkgdown: 2.2.1
 pkgdown_sha: ~
 articles:
   bias-correction-methods: bias-correction-methods.html
+  climate-extremes: climate-extremes.html
   deriving-variables: deriving-variables.html
   download-era5: download-era5.html
   extract-era5-lake: extract-era5-lake.html
   met-data-frames: met-data-frames.html
   scenario-workflow: scenario-workflow.html
-last_built: 2026-09-07T03:53Z
+last_built: 2026-09-08T21:48Z
 urls:
   reference: http://limnotrack.com/metscale/reference
   article: http://limnotrack.com/metscale/articles

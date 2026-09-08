@@ -34,6 +34,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/bias-correction-methods.html">Choosing a bias-correction method</a></li>
+    <li><a class="dropdown-item" href="../articles/climate-extremes.html">Climate extremes as impact-model forcing</a></li>
     <li><a class="dropdown-item" href="../articles/deriving-variables.html">Deriving a complete met set</a></li>
     <li><a class="dropdown-item" href="../articles/download-era5.html">Download ERA5 data</a></li>
     <li><a class="dropdown-item" href="../articles/extract-era5-lake.html">Extracting ERA5-Land over a lake</a></li>
@@ -112,6 +113,11 @@ downscaling of one CMIP6 model (<code>NorESM2-MM</code>) cropped to a
 (<code>ssp245</code>, <code>ssp585</code>). A production run would use a
 multi-decade reanalysis record and 20-year climate windows; the steps
 are identical.</p>
+<p>The hourly ERA5-Land slice was produced by
+<code><a href="../reference/extract_era5_hourly_met.html">extract_era5_hourly_met()</a></code> reading monthly ERA5-Land files.
+The appendix (<em>Checking the extraction grid</em>) shows the one-line
+<code><a href="../reference/plot_extract_grid.html">plot_extract_grid()</a></code> check — that the lake outline sits on
+the grid cells you expect — worth running before any extraction.</p>
 <div class="section level2">
 <h2 id="bias-correct-hourly-era5-against-the-buoy">1. Bias-correct hourly ERA5 against the buoy<a class="anchor" aria-label="anchor" href="#bias-correct-hourly-era5-against-the-buoy"></a>
 </h2>
@@ -521,7 +527,109 @@ long reanalysis record and 20-year climate windows, prefer
 <code>method = "scale"</code> over quantile mapping for the projected
 baseline, and treat the scenario spread (here <code>ssp245</code> vs
 <code>ssp585</code>) as the lower bound on uncertainty. See
-<code><a href="../reference/scenario_workflow.html">?scenario_workflow</a></code>.</p>
+<code><a href="../reference/scenario_workflow.html">?scenario_workflow</a></code>. For projections aimed at storms,
+droughts or heatwaves rather than the mean climate, see
+<code><a href="../articles/climate-extremes.html">vignette("climate-extremes")</a></code>.</p>
+<div class="section level3">
+<h3 id="why-delta-change-and-not-the-model-output-directly">Why delta-change and not the model output directly<a class="anchor" aria-label="anchor" href="#why-delta-change-and-not-the-model-output-directly"></a>
+</h3>
+<p>Steps 2–3 warp an observation-anchored baseline with a monthly change
+signal rather than driving the lake model with the CMIP6 series itself.
+A climate model is reliable for the <em>change</em> between two of its
+own climates, not for the <em>absolute</em> meteorology at a point:</p>
+<ul>
+<li>
+<strong>Raw model output is biased in absolute terms</strong> — mean
+offset, a distorted seasonal cycle, drizzle-heavy rainfall, the wrong
+wind climatology. A sub-daily lake model responds to absolute forcing
+levels, so those errors would land straight in stratification, ice and
+evaporation. Differencing two model climates cancels most of the shared
+bias and keeps only the part worth trusting.</li>
+<li>
+<strong>The corrected baseline carries real weather</strong> —
+genuine day-to-day persistence, event structure, inter-variable
+covariance and a real diurnal cycle, all on actual calendar dates. The
+future model window is a different draw of internal variability on a
+365-day calendar that matches no real sequence. Warping the baseline
+shifts its statistics while keeping a physically consistent series.</li>
+<li>
+<strong>Resolution</strong> — the lake model needs hourly forcing;
+the model series here is daily on a coarse grid with no credible
+sub-daily information. Step 4 borrows the within-day shape from the
+<em>corrected</em> reanalysis instead of inventing it.</li>
+<li>
+<strong>Order of operations</strong> — the reanalysis-to-observation
+correction is an <em>absolute-level</em> adjustment, the delta a
+<em>difference or ratio</em>. Adding a level correction onto a change
+factor is undefined: correct the baseline first, shift second
+(<code><a href="../reference/scenario_workflow.html">?scenario_workflow</a></code>).</li>
+</ul>
+</div>
+<div class="section level3">
+<h3 id="extremes-and-storm-events">Extremes and storm events<a class="anchor" aria-label="anchor" href="#extremes-and-storm-events"></a>
+</h3>
+<p>Delta-change rescales the <em>observed</em> sequence — every
+projected day is a real past day plus that month’s mean shift, or times
+its ratio. It cannot move a storm onto a different date, change how many
+wet or calm days a month holds, or alter day-to-day variance beyond the
+single multiplicative factor on rainfall and wind. The projected return
+period of a given daily rainfall or wind total is close to the observed
+one, only nudged; and the step-4 disaggregator conserves each daily
+total while borrowing an observed within-day profile, so it does not
+sharpen sub-daily peaks either.</p>
+<p>If extremes are the research question — flood-driving rainfall, storm
+mixing, heatwave stratification — the monthly-mean delta is too blunt.
+<code><a href="../articles/climate-extremes.html">vignette("climate-extremes")</a></code> works through the alternatives
+with the same bundled data: per-quantile change factors, driving from
+bias-corrected daily model output, and single-event storyline
+perturbation, plus how to diagnose the resulting forcing and feed it to
+a lake model.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="appendix-checking-the-extraction-grid">Appendix — checking the extraction grid<a class="anchor" aria-label="anchor" href="#appendix-checking-the-extraction-grid"></a>
+</h2>
+<p>The hourly ERA5-Land series bias-corrected in step 1
+(<code>rotorua_era5_hourly_met.csv.gz</code>) was pulled from monthly
+ERA5-Land files with <code><a href="../reference/extract_era5_hourly_met.html">extract_era5_hourly_met()</a></code> — for a
+lake, its wrapper <code><a href="../reference/extract_era5_lake_met.html">extract_era5_lake_met()</a></code>, which averages
+every grid cell the outline overlaps. Before running that it is worth a
+look at <em>which</em> cells the outline actually lands on: a shapefile
+in the wrong projection, a longitude on the wrong side of the
+antimeridian, or a lake smaller than one 0.1° cell all show up instantly
+on a map and silently otherwise.</p>
+<p><code><a href="../reference/plot_extract_grid.html">plot_extract_grid()</a></code> reads the same files the extractor
+would, draws the point or polygon against the grid, and shades the cells
+the chosen <code>method</code> would sample — one cell for
+<code>"nearest"</code>, up to four for <code>"bilinear"</code>, every
+overlapping cell for <code>"area"</code> / <code>"area_mean"</code>,
+each weighted by its share of the intersection. Cells masked out by
+ERA5-Land (sea, or the lake pixels themselves) are outlined in dashed
+blue and dropped, their weight spread over the rest.</p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">lake</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ex</span>, <span class="st">"rotorua_lake_shape.rds"</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/plot_extract_grid.html">plot_extract_grid</a></span><span class="op">(</span><span class="va">grid_dir</span>, geom <span class="op">=</span> <span class="va">lake</span>, method <span class="op">=</span> <span class="st">"area"</span><span class="op">)</span></span></code></pre></div>
+<div class="figure">
+<img src="scenario-workflow_files/figure-html/grid-check-1.png" class="r-plt" alt='**Figure 8.** The Lake Rotorua outline (red, centroid crossed) on the ERA5-Land 0.1&amp;deg; grid. `method = "area"` samples the four cells the polygon overlaps and weights each by its share of the intersection (legend) --- so the extracted lake series is that area-weighted average. Grey dots are cell centres. Here the outline is correctly placed and spans a sensible 2&amp;times;2 block; a projection or coordinate mistake would put it somewhere else entirely.' width="576"><p class="caption">
+<strong>Figure 8.</strong> The Lake Rotorua outline (red, centroid
+crossed) on the ERA5-Land 0.1° grid. <code>method = "area"</code>
+samples the four cells the polygon overlaps and weights each by its
+share of the intersection (legend) — so the extracted lake series is
+that area-weighted average. Grey dots are cell centres. Here the outline
+is correctly placed and spans a sensible 2×2 block; a projection or
+coordinate mistake would put it somewhere else entirely.
+</p>
+</div>
+<p><code><a href="../reference/plot_extract_grid.html">plot_extract_grid()</a></code> returns a <code>ggplot</code>, so it
+takes further <code>+</code> layers, and it carries the drawn cells as
+an <code>sf</code> on <code>attr(., "grid")</code> (columns
+<code>ix</code>, <code>iy</code>, <code>weight</code>,
+<code>selected</code>, <code>land</code>) — hand that to
+<code>mapview</code> or <code>tmap</code> for an interactive check
+against a basemap without either becoming a package dependency. Pass
+<code>engine = "base"</code> for a dependency-free
+<code><a href="https://r-spatial.github.io/sf/reference/plot.html" class="external-link">sf::plot()</a></code> version.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

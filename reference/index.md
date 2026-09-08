@@ -92,6 +92,9 @@
   [`station_from_mslp()`](http://limnotrack.com/metscale/reference/mslp_from_station.md)
   : Convert between station and mean sea level pressure
 
+- [`plot_extract_grid()`](http://limnotrack.com/metscale/reference/plot_extract_grid.md)
+  : Preview the extraction grid, cells and geometry before extracting
+
 - [`prepare_obs_met()`](http://limnotrack.com/metscale/reference/prepare_obs_met.md)
   : Standardise a table of locally measured meteorology for bias
   correction
