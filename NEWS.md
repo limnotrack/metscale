@@ -30,6 +30,15 @@ defects fixed (time-zone handling in the solar geometry, `MET_prsttn` /
     * `extract_era5_lake_met()` now takes a lake polygon (an `sf`/`sfc` or
       a path to one) plus optional `id` / `name` labels; the old
       `lakes` / `layer` id-and-name lookup has been removed.
+* `plot_extract_grid()` -- a pre-extraction sanity-check map: the ERA5-Land
+  grid around a point or lake polygon, the cell(s) each `method` would
+  sample shaded by weight, the land/sea mask, and the geometry on top. Run
+  it to catch a mis-projected shapefile or a sign-flipped longitude before
+  extracting. Returns a `ggplot` (drawn cells attached as an `sf` on
+  `attr(., "grid")` for handing to `mapview` / `tmap`), or draws with
+  `sf::plot()` for `engine = "base"`. Uses the same file-matching and
+  sampling code as the extractors, so the preview cannot drift from the
+  extraction.
 
 ## Climate projections
 
@@ -91,7 +100,9 @@ defects fixed (time-zone handling in the solar geometry, `MET_prsttn` /
   `met_to_daily()`, `met_to_cf()` / `cf_to_met()`) that bring data into it.
 * `vignette("download-era5")` -- the three ways to acquire ERA5 forcing.
 * `vignette("extract-era5-lake")` -- point vs polygon (lake-average)
-  extraction from ERA5-Land netCDF and the `method` options.
+  extraction from ERA5-Land netCDF and the `method` options, with
+  `plot_extract_grid()` worked through for each: a point, the four polygon
+  methods side by side, cells masked by ERA5-Land, and `max_dist_km`.
 * `vignette("deriving-variables")` -- fill a minimal set out to everything
   a lake model needs with `expand_met()` and the underlying conversions.
 * `vignette("bias-correction-methods")` -- comparing `scale` / `variance` /
@@ -99,4 +110,5 @@ defects fixed (time-zone handling in the solar geometry, `MET_prsttn` /
   present-day vs projection trade-off.
 * `vignette("scenario-workflow")` -- the end-to-end bias-correction ->
   delta-change -> disaggregation pipeline on the bundled Lake Rotorua
-  example data.
+  example data, with an appendix on checking the extraction grid with
+  `plot_extract_grid()`.
