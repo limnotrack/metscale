@@ -21,7 +21,7 @@ does not require it.
 
 | Task | Function |
 |---|---|
-| Download ERA5 forcing: global daily point series (ISIMIP3a, no key), hourly GRIB from the Copernicus Data Store, or aggregate downloaded netCDF to daily | `download_era5_isimip_point()`, `download_era5_cds()` / `read_era5_grib_point()`, `convert_era5_netcdf()` |
+| Download ERA5 forcing: global daily point series (ISIMIP3a, no key), hourly GRIB from the Copernicus Data Store, or aggregate downloaded netCDF / GRIB to daily | `download_era5_isimip_point()`, `download_era5_cds()` / `read_era5_grib_point()`, `convert_era5_netcdf()` |
 | Extract hourly ERA5-Land at a point or averaged over a lake polygon, in standard units and time zone | `extract_era5_hourly_met()`, `extract_era5_lake_met()` |
 | Standardise a table of measured meteorology (names, units, timezone, resampling) | `prepare_obs_met()`, `standardise_met()`, `guess_met_vars()` |
 | Translate a met table between the AEME `MET_*` scheme and CF / CMIP short names and units (`tas`, `pr`, `sfcWind`, …) | `met_to_cf()`, `cf_to_met()` |
@@ -44,9 +44,12 @@ degC, `MET_humrel` %, `MET_tmpdew` degC, `MET_prvapr` hPa, `MET_prsttn` /
 `MET_wnduvu` / `MET_wnduvv` m/s, `MET_pprain` / `MET_ppsnow` mm per
 timestep.
 
-The default time zone `"Etc/GMT-12"` is fixed NZST (UTC+12, no daylight
-saving), which keeps a gap-free regular sub-daily series; pass any other
-zone via the `tz` argument.
+The default time zone is `"UTC"`, matching the clock ERA5, ERA5-Land and
+CMIP6 are published on, so the extractors apply no hidden shift. Every
+`tz` argument resolves the same way: an explicit value first, then the
+`tz` attribute carried on the input, then UTC. Pass a fixed-offset zone
+such as `"Etc/GMT-12"` (NZST, UTC+12, no daylight saving) to work in
+local time while keeping a gap-free regular sub-daily series.
 
 `met_to_cf()` maps this scheme onto the CF / CMIP short names and units
 (`MET_tmpair` degC → `tas` K, `MET_pprain` mm/step → `pr` kg m-2 s-1,

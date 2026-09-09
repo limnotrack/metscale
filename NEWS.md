@@ -15,7 +15,12 @@ defects fixed (time-zone handling in the solar geometry, `MET_prsttn` /
   global, no account or key.
 * `download_era5_cds()` / `read_era5_grib_point()` -- hourly ERA5 GRIB from
   the Copernicus Data Store and point extraction from it.
-* `convert_era5_netcdf()` -- aggregate a downloaded ERA5 netCDF to daily.
+* `convert_era5_netcdf()` -- daily aggregation: a thin wrapper that runs
+  `extract_era5_hourly_met()` (so it now reads netCDF **or GRIB**, with the
+  same `pattern` discovery and spatial sampling) and aggregates to daily with
+  `met_to_daily()`, adding daily min/max air and dewpoint temperature. Takes
+  `path` first and forwards `...` to `extract_era5_hourly_met()`; the old
+  `year` / `variable` (singular) / positional `file` arguments are gone.
 * `extract_era5_hourly_met()` / `extract_era5_lake_met()` -- hourly
   ERA5-Land at a point or area-weighted over a lake polygon, de-accumulated,
   in standard units and a chosen time zone.
@@ -30,6 +35,14 @@ defects fixed (time-zone handling in the solar geometry, `MET_prsttn` /
     * `extract_era5_lake_met()` now takes a lake polygon (an `sf`/`sfc` or
       a path to one) plus optional `id` / `name` labels; the old
       `lakes` / `layer` id-and-name lookup has been removed.
+* `plot_era5()` -- a quick-look viewer for a downloaded ERA5 / ERA5-Land
+  GRIB or netCDF file: for every variable it finds (GRIB bands grouped by
+  `GRIB_ELEMENT`, netCDF by sub-dataset), a map of the field aggregated over
+  time next to a time series -- the grid mean, or a bilinear sample at
+  `point`. `time` maps a single step instead; a vector of files is stacked
+  in time. Returns a per-variable summary data frame with the aggregated
+  maps and series attached, or a `ggplot` for `engine = "ggplot2"`. Reads
+  with `terra`, matching the extractors' backend rule.
 * `plot_extract_grid()` -- a pre-extraction sanity-check map: the ERA5-Land
   grid around a point or lake polygon, the cell(s) each `method` would
   sample shaded by weight, the land/sea mask, and the geometry on top. Run
@@ -92,6 +105,21 @@ defects fixed (time-zone handling in the solar geometry, `MET_prsttn` /
   `station_from_mslp()`, `calc_in_lwr()`, `calc_cc()`.
 * Solar geometry: `solar_zenith_angle()`, `clear_sky_swr()`,
   `estimate_hourly_swr()`.
+
+## Time zones
+
+* Every function that takes a `tz` argument now defaults to **UTC**, the
+  zone ERA5, ERA5-Land and CMIP6 are published in, instead of the
+  New-Zealand-specific `"Etc/GMT-12"`. `extract_era5_hourly_met()` /
+  `extract_era5_lake_met()` therefore return the reanalysis on its native
+  clock with no hidden shift; convert downstream by passing `tz` (e.g.
+  `"Etc/GMT-12"` for fixed NZST) or with `lubridate::with_tz()`.
+* `tz` is resolved consistently across the package: an explicit argument
+  wins, otherwise the `tz` attribute carried on the input data frame (or a
+  POSIXct's `tzone`), otherwise UTC. `expand_met()`, `calc_cc()` and
+  `estimate_hourly_swr()` previously ignored that attribute and hard-coded
+  `"Etc/GMT-12"`, which could re-introduce the solar phase-shift on
+  non-NZ input; they now follow the attribute like the rest.
 
 ## Vignettes
 
