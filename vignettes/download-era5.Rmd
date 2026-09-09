@@ -11,7 +11,7 @@ vignette: >
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
-  eval = FALSE
+  eval = TRUE
 )
 ```
 
@@ -28,7 +28,7 @@ lightest to heaviest. Whichever you use, the output feeds into
 All three functions need suggested packages that are **not** installed with
 `metscale` by default:
 
-```{r install-deps}
+```{r install-deps, eval=FALSE}
 install.packages(c("httr2", "jsonlite", "terra", "ecmwfr", "stars", "sf"))
 ```
 
@@ -57,28 +57,55 @@ units (degC, mm/day, ...).
 ## 2. Gridded GRIB from the Copernicus Data Store — `download_era5_cds()`
 
 For the full hourly ERA5 / ERA5-Land archive you need a free
+[ECMWF account](https://www.ecmwf.int/user/login) or a free
 [Copernicus Data Store (CDS)](https://cds.climate.copernicus.eu/user/register)
 account, linked to your session with `ecmwfr::wf_set_key()`. See the
 [ecmwfr documentation](https://bluegreen-labs.github.io/ecmwfr/#use).
 
-```{r cds-key}
-ecmwfr::wf_set_key(key = Sys.getenv("CDS_KEY"), user = Sys.getenv("CDS_USER"))
+```{r cds-key echo=FALSE, eval=TRUE, message=FALSE}
+ecmwfr::wf_set_key(key = Sys.getenv("ECMWF_KEY"),
+                   user = Sys.getenv("ECMWF_USER"))
 ```
 
 `download_era5_cds()` submits one CDS request per variable / year / month
 (batched, up to 20 at a time) and writes a GRIB file per request. Give it a
 point plus `buffer`, or an `sf` polygon as `shape`.
 
-```{r cds-download}
+File downloads can be slow, so this vignette uses a pre-downloaded GRIB for
+demonstration. The `extdata` directory contains a single GRIB for Lake Toba,
+Indonesia (2m temperature, January 2024).
+
+
+```{r echo=FALSE}
+files <- system.file("extdata/era5/reanalysis-era5-land_2m_temperature_hourly_2024_1_toba.grib",
+                     package = "metscale")
+```
+
+```{r cds-download, message=FALSE, eval=FALSE}
 year <- 2024
 month <- 1
 files <- download_era5_cds(
   lat = lat, lon = lon, year = year, month = month,
   variable = "2m_temperature", path = "data/test", site = "toba",
-  user = Sys.getenv("CDS_USER")
+  user = Sys.getenv("ECMWF_USER")
 )
+```
+```{r}
 files
 ```
+
+Plot the downloaded GRIB with `plot_era5_grib()`:
+
+Plot the point location on the downloaded grid with `plot_extract_grid()`:
+
+```{r}
+#| fig.width: 6
+#| fig.height: 6
+#| fig.caption: "ERA5 grid and extraction point"
+path <- dirname(files)
+plot_extract_grid(path = path, lon = lon, lat = lat, method = "bilinear")
+```
+
 
 Extract a point (or polygon-mean) time series from the downloaded GRIB with
 `read_era5_grib_point()`:
@@ -96,34 +123,37 @@ already matches `download_era5_cds()` names, so nothing else is needed:
 
 ```{r grib-hourly}
 met <- extract_era5_hourly_met(
-  path = "data/test", lon = lon, lat = lat, years = year)
+  path = "data/test", lon = lon, lat = lat, years = year, variables = "2m_temperature"
+  )
 ```
 
-## 3. Aggregate downloaded netCDF to daily — `convert_era5_netcdf()`
+## 3. Aggregate downloaded ERA5 to daily — `convert_era5_netcdf()`
 
-If you already have hourly ERA5 netCDF on disk (named
-`era5_<variable>_hourly_<year>_<site>.nc`), `convert_era5_netcdf()` aggregates
-each variable to daily with the appropriate function (mean, or max for
-precipitation / radiation) and returns AEME or LakeEnsemblR columns.
+For a **daily** frame, `convert_era5_netcdf()` wraps the step above: it runs
+`extract_era5_hourly_met()` over the files in `path` (netCDF or GRIB — the
+same file discovery, spatial sampling, de-accumulation, unit conversion and
+time-zone shift) and then aggregates to daily with `met_to_daily()` (rain and
+snow summed, everything else averaged). Extra `...` arguments are forwarded to
+`extract_era5_hourly_met()`.
 
 ```{r convert}
 met <- convert_era5_netcdf(
-  lat = lat, lon = lon, year = 2022:2023,
-  path = "era5_netcdf", site = "toba", format = "AEME"
+  path = path, lon = lon, lat = lat, years = year,
+  variables = "2m_temperature", site = "toba", format = "AEME"
 )
 ```
 
-For **hourly** extraction from ERA5-Land netCDF — with de-accumulation of the
-flux variables, unit conversion and a time-zone shift — use
-`extract_era5_hourly_met()` / `extract_era5_lake_met()` instead.
+Unless `minmax = FALSE`, daily minimum and maximum air and dewpoint
+temperature are added (`MET_airmin` / `MET_airmax` / `MET_dewmin` /
+`MET_dewmax`).
 
-`convert_era5_netcdf(format = "raw")` returns the ERA5 nc short names
-(`t2m`, `d2m`, `ssrd`, `strd`, ...), which `standardise_met()` recognises
-directly:
+`convert_era5_netcdf(format = "raw")` returns the ERA5 short names
+(`t2m`, `d2m`, `ssrd`, `strd`, ...) with a `datetime` column, which
+`standardise_met()` recognises directly:
 
 ```{r standardise}
-met_raw <- convert_era5_netcdf(lat = lat, lon = lon, year = 2022,
-                               path = "era5_netcdf", format = "raw")
+met_raw <- convert_era5_netcdf(path = path, lon = lon, lat = lat, years = year,
+                               variables = "2m_temperature", format = "raw")
 std <- standardise_met(met_raw)
 ```
 
