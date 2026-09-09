@@ -6,6 +6,8 @@
 \alias{metscale-package}
 \title{metscale: Climate and Meteorological Forcing: Extraction, Bias Correction and Temporal Disaggregation}
 \description{
+\if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
+
 Prepare model-ready meteorological forcing from gridded reanalysis and climate projections. Extract hourly meteorology from reanalysis netCDF or GRIB (ERA5-Land) at a point or averaged over a polygon, convert to standard units and a chosen time zone, bias-correct against locally measured observations (monthly scaling, variance scaling, linear regression, empirical or trend-preserving quantile mapping, with leave-one-year-out cross-validation), and temporally disaggregate daily meteorology (including climate-scenario series) to hourly or 3-hourly using an analogue-day method of fragments or a mean diurnal cycle. Works standalone; integrates with the Aquatic Ecosystem Model Ensemble ('AEME') when installed, but is not tied to any process model.
 }
 \seealso{

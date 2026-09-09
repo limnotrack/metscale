@@ -8,7 +8,7 @@ estimate_hourly_swr(
   met,
   lat,
   lon,
-  tz = "Etc/GMT-12",
+  tz = NULL,
   timestep = c("hour", "3hour"),
   interval = c("ending", "beginning", "instant"),
   cloud = 0
@@ -21,8 +21,9 @@ daily resolution) and \code{MET_radswd} in W m-2.}
 \item{lat, lon}{position in decimal degrees.}
 
 \item{tz}{timezone the daily dates refer to, and in which the sub-daily
-output is labelled. Default \code{"Etc/GMT-12"} (fixed NZST, no daylight
-saving).}
+output is labelled. Default \code{NULL}, which uses the \code{tz} attribute of
+\code{met} when present, otherwise \code{"UTC"}. Pass a fixed-offset zone such as
+\code{"Etc/GMT-12"} (NZST) to place the peak at local solar noon.}
 
 \item{timestep}{\code{"hour"} (default) or \code{"3hour"}.}
 

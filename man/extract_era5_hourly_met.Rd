@@ -16,7 +16,7 @@ extract_era5_hourly_met(
     "surface_thermal_radiation_downwards", "total_precipitation", "snowfall",
     "surface_pressure"),
   method = c("bilinear", "nearest", "area", "area_mean"),
-  tz = "Etc/GMT-12",
+  tz = "UTC",
   format = c("AEME", "LER", "raw"),
   precip_units = c("mm/hr", "m/day", "mm/day", "m/hr"),
   pressure_units = c("Pa", "hPa"),
@@ -25,7 +25,8 @@ extract_era5_hourly_met(
   area_crs = 2193,
   outfile = NULL,
   fill_gaps = TRUE,
-  verbose = TRUE
+  verbose = TRUE,
+  digits = 6
 )
 }
 \arguments{
@@ -48,10 +49,11 @@ standard meteorological forcing variables.}
 \item{method}{\code{"nearest"}, \code{"bilinear"} (default), \code{"area"} or
 \code{"area_mean"} - see Details.}
 
-\item{tz}{output time zone. Default \code{"Etc/GMT-12"} = fixed NZST
-(UTC+12, no daylight saving) which keeps a gap-free regular hourly
-series. Use \code{"Pacific/Auckland"} for civil NZ time (a duplicated hour
-every April, a missing hour every September).}
+\item{tz}{output time zone, applied to the native-UTC ERA5 time
+stamps. Default \code{"UTC"} (no shift). Pass a fixed-offset zone such as
+\code{"Etc/GMT-12"} (NZST) to keep a gap-free regular hourly series in
+local time, or \code{"Pacific/Auckland"} for civil NZ time (a duplicated
+hour every April, a missing hour every September).}
 
 \item{format}{\code{"AEME"} (default, \verb{MET_*} names), \code{"LER"} (LakeEnsemblR
 names) or \code{"raw"} (ERA5 short names).}
@@ -90,6 +92,9 @@ use a projection appropriate to your region.}
 (missing steps become \code{NA}). Default \code{TRUE}.}
 
 \item{verbose}{print progress messages.}
+
+\item{digits}{significant digits for the output dataframe (default \code{6}).
+Set to \code{NULL} to keep the full precision of the ERA5 data.}
 }
 \value{
 a data frame: a time column (\code{Date} for AEME, else \code{datetime};

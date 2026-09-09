@@ -51,7 +51,7 @@ attributes of \code{daily} or \code{donor} when \code{NULL}.}
 \item{elev}{elevation, m, used only when \code{expand = TRUE}.}
 
 \item{tz}{timezone of \code{daily} and of the output. Defaults to the \code{tz}
-attribute of \code{daily}, then of \code{donor}, else \code{"Etc/GMT-12"}.}
+attribute of \code{daily}, then of \code{donor}, else \code{"UTC"}.}
 
 \item{analogue_window}{half-width, in days of the year, of the donor
 pool for \code{method = "fragments"} (default 15).}
@@ -125,7 +125,7 @@ daily mean - it is recomputed from the disaggregated \code{MET_wnduvu} /
 \examples{
 set.seed(1)
 ## donor: two years of synthetic hourly data with a diurnal cycle
-t <- seq(as.POSIXct("2022-01-01", tz = "Etc/GMT-12"), by = "hour",
+t <- seq(as.POSIXct("2022-01-01", tz = "UTC"), by = "hour",
          length.out = 24 * 730)
 hr <- as.integer(format(t, "\%H"))
 donor <- data.frame(Date = t,

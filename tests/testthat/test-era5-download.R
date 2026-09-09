@@ -44,9 +44,8 @@ test_that("acquisition functions error clearly without their suggested deps", {
   if (!requireNamespace("httr2", quietly = TRUE)) {
     expect_error(download_era5_isimip_point(0, 0, 2021), "httr2")
   }
-  if (!requireNamespace("stars", quietly = TRUE)) {
-    expect_error(convert_era5_netcdf(lat = 0, lon = 0), "stars")
-  }
+  expect_error(convert_era5_netcdf(path = tempfile(), lon = 0, lat = 0),
+               "dir.exists")
   succeed()
 })
 

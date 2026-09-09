@@ -40,7 +40,7 @@ Default 1361 (solar constant); pass a clear-sky series (same length as
 \item{lat, lon, elev}{lake position for \code{expand}.}
 
 \item{tz}{timezone for the solar geometry in \code{\link[=expand_met]{expand_met()}}; defaults to
-the \code{tz} attribute of \code{era5}, else \code{"Etc/GMT-12"}.}
+the \code{tz} attribute of \code{era5}, else \code{"UTC"}.}
 
 \item{verbose}{report which variables were corrected.}
 }

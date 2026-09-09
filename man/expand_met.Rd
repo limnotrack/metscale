@@ -4,7 +4,7 @@
 \alias{expand_met}
 \title{Expand a minimal meteorological set to a complete one}
 \usage{
-expand_met(met, lat, lon, elev = 0, tz = "Etc/GMT-12", round_to = 3)
+expand_met(met, lat, lon, elev = 0, tz = NULL, round_to = 3)
 }
 \arguments{
 \item{met}{data frame with a \code{Date} column (\code{Date} or POSIXct) and the
@@ -15,8 +15,8 @@ expand_met(met, lat, lon, elev = 0, tz = "Etc/GMT-12", round_to = 3)
 \item{elev}{lake surface elevation, m above sea level.}
 
 \item{tz}{timezone the timestamps refer to, used for the solar geometry
-in \code{\link[=calc_cc]{calc_cc()}}. Default \code{"Etc/GMT-12"} (fixed NZST). Ignored when
-\code{MET_cldcvr} is supplied.}
+in \code{\link[=calc_cc]{calc_cc()}}. Default \code{NULL}, which uses the \code{tz} attribute of \code{met}
+when present, otherwise \code{"UTC"}. Ignored when \code{MET_cldcvr} is supplied.}
 
 \item{round_to}{decimal places for the returned values, or \code{NULL} to
 leave unrounded.}

@@ -10,7 +10,7 @@ met_to_daily(met, tz = NULL, min_frac = 0.5)
 \item{met}{data frame with \code{Date} (POSIXct) + \verb{MET_*} columns.}
 
 \item{tz}{time zone used to assign calendar days (default: the \code{tz}
-attribute of \code{met}, else \code{"Etc/GMT-12"}).}
+attribute of \code{met}, else \code{"UTC"}).}
 
 \item{min_frac}{drop days with less than this fraction of expected
 hourly records (default 0.5); set 0 to keep all.}
@@ -24,7 +24,7 @@ class \code{Date}, which is what lake-model builders such as
 \code{AEME::build_aeme()} expect.
 }
 \examples{
-h <- data.frame(Date = seq(as.POSIXct("2024-01-01", tz = "Etc/GMT-12"),
+h <- data.frame(Date = seq(as.POSIXct("2024-01-01", tz = "UTC"),
                            by = "hour", length.out = 48),
                 MET_tmpair = rnorm(48, 15), MET_pprain = 0.1)
 met_to_daily(h)

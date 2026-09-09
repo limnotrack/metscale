@@ -13,7 +13,7 @@ extract_cmip6_point(
   experiments = NULL,
   method = c("bilinear", "nearest"),
   calendar = c("auto", "365_day", "360_day", "366_day", "standard"),
-  tz = "Etc/GMT-12",
+  tz = "UTC",
   verbose = TRUE
 )
 }
@@ -40,7 +40,7 @@ surrounding grid nodes, or \code{"nearest"} grid node.}
 real dates, so it has no 29 February (and, for \verb{360_day}, no 31st).}
 
 \item{tz}{time zone recorded on the result; the series is daily and
-carries no time of day. Default \code{"Etc/GMT-12"}.}
+carries no time of day. Default \code{"UTC"}.}
 
 \item{verbose}{print each file as it is read.}
 }

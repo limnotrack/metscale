@@ -26,7 +26,7 @@ aggregate without correcting.}
 when \code{NULL}.}
 
 \item{tz}{timezone for day boundaries and solar geometry; defaults to
-the \code{tz} attribute of \code{era5}.}
+the \code{tz} attribute of \code{era5}, else \code{"UTC"}.}
 
 \item{expand}{regenerate the dependent variables with \code{\link[=expand_met]{expand_met()}}
 (default \code{TRUE}).}

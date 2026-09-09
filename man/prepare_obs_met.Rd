@@ -9,7 +9,7 @@ prepare_obs_met(
   col_map = NULL,
   datetime_col = NULL,
   date_format = NULL,
-  tz = "Etc/GMT-12",
+  tz = NULL,
   resample = c("none", "hour", "day"),
   interval = c("ending", "beginning"),
   derive = TRUE,
@@ -38,9 +38,10 @@ strings contain a time (a \code{:}), only date-time formats are considered
 so that a stray time-less row does not silently collapse the whole
 column to dates.}
 
-\item{tz}{time zone of the observation timestamps. Default
-\code{"Etc/GMT-12"} = fixed NZST (matches the extractor default). Use
-\code{"Pacific/Auckland"} if the logger recorded civil time with DST.}
+\item{tz}{time zone of the observation timestamps. Default \code{"UTC"}
+(matches the \code{\link[=extract_era5_hourly_met]{extract_era5_hourly_met()}} default). Set this to the
+zone your logger actually recorded in - e.g. \code{"Etc/GMT-12"} for fixed
+NZST, or \code{"Pacific/Auckland"} if it recorded civil time with DST.}
 
 \item{resample}{\code{"none"} (keep native step, de-duplicated), \code{"hour"}
 (mean per hour; rain/snow summed) or \code{"day"} (daily mean; rain/snow

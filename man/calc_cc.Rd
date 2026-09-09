@@ -13,7 +13,7 @@ calc_cc(
   lat,
   lon,
   elev = 0,
-  tz = "Etc/GMT-12"
+  tz = NULL
 )
 }
 \arguments{
@@ -32,7 +32,8 @@ calc_cc(
 \item{elev}{elevation, m above sea level.}
 
 \item{tz}{timezone that \code{datetime} refers to; used to expand daily dates
-into hours. Default \code{"Etc/GMT-12"} (fixed NZST).}
+into hours. Default \code{NULL}, which uses the \code{tzone} attribute of
+\code{datetime} when it carries one, otherwise \code{"UTC"}.}
 }
 \value{
 numeric vector of cloud cover fractions (0-1), same length as

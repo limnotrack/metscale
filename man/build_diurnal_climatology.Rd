@@ -11,7 +11,7 @@ build_diurnal_climatology(hourly, tz = NULL, vars = NULL, n_sub = 24)
 from \code{\link[=extract_era5_lake_met]{extract_era5_lake_met()}}.}
 
 \item{tz}{timezone in which the diurnal cycle is expressed. Defaults to
-the \code{tz} attribute of \code{hourly}, else \code{"Etc/GMT-12"}.}
+the \code{tz} attribute of \code{hourly}, else \code{"UTC"}.}
 
 \item{vars}{variables to summarise; default all \verb{MET_*} columns present.}
 
@@ -33,7 +33,7 @@ precipitation). Used by \code{\link[=disaggregate_met_to_hourly]{disaggregate_me
 \examples{
 set.seed(1)
 h <- data.frame(
-  Date = seq(as.POSIXct("2024-01-01", tz = "Etc/GMT-12"),
+  Date = seq(as.POSIXct("2024-01-01", tz = "UTC"),
              by = "hour", length.out = 24 * 60),
   MET_tmpair = 15 + 5 * sin(seq_len(24 * 60) * 2 * pi / 24) + rnorm(24 * 60))
 dc <- build_diurnal_climatology(h)
