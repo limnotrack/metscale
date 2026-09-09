@@ -40,6 +40,43 @@
                                    ler  = "Surface_Level_Barometric_Pressure_pascal")
 )
 
+#' Rename an AEME-named (`MET_*`, `Date`) ERA5 frame to LakeEnsemblR or raw
+#' ERA5 short names.
+#'
+#' Covers the nine standard variables (from `.era5_ref`), the derived
+#' wind / humidity columns, the `*min` / `*max` daily temperature columns
+#' and the leading time column (`Date` -> `datetime`). Columns with no
+#' mapping are left untouched.
+#' @noRd
+.era5_rename_from_aeme <- function(df, format = c("LER", "raw")) {
+  format <- match.arg(format)
+  ref  <- .era5_ref
+  aeme <- vapply(ref, `[[`, character(1), "aeme")
+  tgt  <- if (format == "LER") vapply(ref, `[[`, character(1), "ler")
+          else                 vapply(ref, function(x) x$nc[1], character(1))
+  map  <- stats::setNames(tgt, aeme)
+
+  extra <- if (format == "LER")
+    c(Date       = "datetime",
+      MET_wndspd = "Ten_Meter_Wind_Speed_meterPerSecond",
+      MET_wnddir = "Wind_Direction_degree",
+      MET_humrel = "Relative_Humidity_percent",
+      MET_airmin = "Air_Temperature_min_celsius",
+      MET_airmax = "Air_Temperature_max_celsius",
+      MET_dewmin = "Dewpoint_Temperature_min_celsius",
+      MET_dewmax = "Dewpoint_Temperature_max_celsius")
+  else
+    c(Date       = "datetime",
+      MET_wndspd = "wndspd", MET_wnddir = "wnddir", MET_humrel = "humrel",
+      MET_airmin = "t2m_min", MET_airmax = "t2m_max",
+      MET_dewmin = "d2m_min", MET_dewmax = "d2m_max")
+  map <- c(map, extra)
+
+  hit <- match(names(df), names(map))
+  names(df)[!is.na(hit)] <- unname(map[hit[!is.na(hit)]])
+  df
+}
+
 #' Reader backend for one file, from its extension: GRIB (.grib/.grb/.grib2)
 #' is read with 'terra', everything else with 'ncdf4'.
 #' @noRd
