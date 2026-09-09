@@ -45,6 +45,19 @@ download_era5_isimip_point <- function(lon, lat, years,
     }
   }
 
+  # Timer helpers so the user gets a sense of how long each step takes
+  t_start <- Sys.time()
+  fmt_dur <- function(since) {
+    secs <- as.numeric(difftime(Sys.time(), since, units = "secs"))
+    if (secs < 60) {
+      sprintf("%.0fs", secs)
+    } else if (secs < 3600) {
+      sprintf("%.1f min", secs / 60)
+    } else {
+      sprintf("%.1f h", secs / 3600)
+    }
+  }
+
   # ISIMIP API URL
   url <- "https://files.isimip.org/api/v2"
 
@@ -64,13 +77,19 @@ download_era5_isimip_point <- function(lon, lat, years,
   )
 
   # Perform the initial request to the server
+  cli::cli_alert_info(
+    "Submitting job to ISIMIP server ({length(paths)} file{?s} requested)"
+  )
+  t_submit <- Sys.time()
   req <- httr2::request(url) |>
     httr2::req_body_json(data)
 
   res <- tryCatch(
     httr2::req_perform(req),
     error = function(e) {
-      cli::cli_alert_danger("job submission failed: {e$message}")
+      cli::cli_alert_danger(
+        "Job submission failed after {fmt_dur(t_submit)}: {e$message}"
+      )
       return(NULL)
     }
   )
@@ -79,31 +98,63 @@ download_era5_isimip_point <- function(lon, lat, years,
 
   if (httr2::resp_status(res) >= 200 && httr2::resp_status(res) < 300) {
     job <- httr2::resp_body_json(res)
-    cli::cli_alert_info("job submitted | id={job$id} | status={job$status}")
+    cli::cli_alert_success(
+      "Job submitted in {fmt_dur(t_submit)} | id={job$id} | status={job$status}"
+    )
 
-    # Poll until finished
+    # Poll until the server has finished preparing the files
+    t_poll <- Sys.time()
     while (job$status %in% c("queued", "started")) {
       Sys.sleep(4)
       job_req <- httr2::request(job$job_url)
       job_res <- httr2::req_perform(job_req)
       job <- httr2::resp_body_json(job_res)
+
+      created <- job$meta$created_files
+      total <- job$meta$total_files
+      poll_secs <- as.numeric(difftime(Sys.time(), t_poll, units = "secs"))
+      # Rough ETA from the file-creation rate observed so far
+      eta <- ""
+      if (length(total) == 1 && !is.na(total) && length(created) == 1 &&
+          !is.na(created) && created > 0 && created < total) {
+        remaining <- (total - created) * (poll_secs / created)
+        eta <- if (remaining < 60) {
+          sprintf(", ~%.0fs left", remaining)
+        } else {
+          sprintf(", ~%.1f min left", remaining / 60)
+        }
+      }
       cli::cli_alert_info(
-        "job {job$status} | {job$meta$created_files}/{job$meta$total_files} files created | id={job$id}"
+        "Server {job$status}: {created}/{total} files prepared ({fmt_dur(t_poll)} elapsed{eta})"
       )
     }
 
     if (job$status == "finished") {
-      # Download file
+      cli::cli_alert_success(
+        "Server finished preparing {job$meta$total_files} file{?s} in {fmt_dur(t_poll)}"
+      )
+
+      # Download the results archive
       zip_path <- file.path(download_path, job$file_name)
       dir.create(dirname(zip_path), showWarnings = FALSE, recursive = TRUE)
-      cli::cli_alert_info("downloading {job$file_url}")
+      cli::cli_alert_info("Downloading {job$file_name}")
+      t_dl <- Sys.time()
       utils::download.file(job$file_url, zip_path, mode = "wb")
+      dl_secs <- as.numeric(difftime(Sys.time(), t_dl, units = "secs"))
+      size_mb <- file.size(zip_path) / 1024^2
+      dl_rate <- sprintf("%.1f MB/s", size_mb / max(dl_secs, 0.001))
+      cli::cli_alert_success(
+        "Downloaded {sprintf('%.1f MB', size_mb)} in {fmt_dur(t_dl)} ({dl_rate})"
+      )
 
-      # Extract zip file
+      # Extract the archive
       out_path <- sub("\\.zip$", "", zip_path)
       dir.create(out_path, showWarnings = FALSE, recursive = TRUE)
-      cli::cli_alert_info("extracting {zip_path} -> {out_path}")
+      cli::cli_alert_info("Extracting archive to {out_path}")
+      t_zip <- Sys.time()
       utils::unzip(zip_path, exdir = out_path)
+      n_nc <- length(list.files(out_path, pattern = "\\.nc$"))
+      cli::cli_alert_success("Extracted {n_nc} file{?s} in {fmt_dur(t_zip)}")
 
     } else {
       cli::cli_alert_danger("job did not finish successfully (status {job$status})")
@@ -112,7 +163,10 @@ download_era5_isimip_point <- function(lon, lat, years,
     cli::cli_alert_danger("job submission failed: {httr2::resp_body_string(res)}")
   }
 
+  cli::cli_alert_info("Reading {length(vars)} variable{?s} from NetCDF files")
+  t_read <- Sys.time()
   out <- lapply(vars, \(v) {
+    t_v <- Sys.time()
     fils <- list.files(out_path, full.names = TRUE, pattern = paste0("_", v, "_"))
     df <- lapply(fils, \(f) {
       suppressWarnings({
@@ -124,8 +178,12 @@ download_era5_isimip_point <- function(lon, lat, years,
     }) |>
       dplyr::bind_rows()
     names(df) <- c("Date", v)
+    cli::cli_alert_info(
+      "  {v}: {length(fils)} file{?s}, {nrow(df)} record{?s} ({fmt_dur(t_v)})"
+    )
     return(df)
   })
+  cli::cli_alert_success("Read all variables in {fmt_dur(t_read)}")
 
   # Join all data frames by the "Date" column
   result <- Reduce(function(x, y) dplyr::full_join(x, y, by = "Date"), out)
@@ -143,6 +201,10 @@ download_era5_isimip_point <- function(lon, lat, years,
 
   # Rename to AEME column names
   names(result) <- switch_vars(names(result))
+
+  cli::cli_alert_success(
+    "Done: {nrow(result)} daily record{?s} for {length(vars)} variable{?s} (total {fmt_dur(t_start)})"
+  )
 
   return(result)
 }
