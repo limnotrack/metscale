@@ -1,128 +1,110 @@
-#' Convert ERA5 netCDF files to AEME or LER daily meteorology
+#' Convert downloaded ERA5 files to a daily meteorology data frame
 #'
 #' @description
-#' Aggregate downloaded hourly ERA5 netCDF files to a daily data frame in
-#' AEME (`MET_*`) or LakeEnsemblR column names, sampling at a point.
+#' Convenience wrapper that runs [extract_era5_hourly_met()] over the ERA5
+#' files in `path` (netCDF, or GRIB as written by [download_era5_cds()]) and
+#' aggregates the model-ready hourly frame to daily with [met_to_daily()]:
+#' precipitation and snowfall are summed, everything else is averaged, and -
+#' unless `minmax = FALSE` - daily minimum and maximum air and dewpoint
+#' temperature are added.
 #'
-#' Requires the suggested packages \pkg{stars} and \pkg{sf}.
+#' File discovery (by name `pattern`), the per-file reader backend, spatial
+#' sampling (`method`), de-accumulation of the flux variables, unit
+#' conversion and the UTC -> `tz` shift are all handled by
+#' [extract_era5_hourly_met()]; see there for the details and for the
+#' arguments passed through `...`.
 #'
-#' @param lat numeric; latitude.
-#' @param lon numeric; longitude.
-#' @param variable string with ERA5 variable names e.g. "2m_temperature",
-#' "total_precipitation".
-#' @param year numeric; vector with years.
-#' @param site string of site name which was used when downloading the data.
-#' @param path filepath to where the downloaded ERA5 ncdf files are stored.
-#' @param format string; Either "AEME" or "LER". Default is "AEME".
+#' @param path directory holding the ERA5 files (netCDF or GRIB).
+#' @param format `"AEME"` (default, `MET_*` names, a `Date` column), `"LER"`
+#'   (LakeEnsemblR names) or `"raw"` (ERA5 short names); `"LER"` and `"raw"`
+#'   return a `datetime` column.
+#' @param tz output / aggregation time zone: passed to
+#'   [extract_era5_hourly_met()] and used to assign calendar days. Default
+#'   `"UTC"`.
+#' @param minmax add daily min / max columns for air and dewpoint
+#'   temperature (`MET_airmin` / `MET_airmax` / `MET_dewmin` / `MET_dewmax`
+#'   in AEME naming). Default `TRUE`.
+#' @param min_frac drop days with fewer than this fraction of the expected
+#'   hourly records, passed to [met_to_daily()]. Default `0.5`; set `0` to
+#'   keep every day.
+#' @param site optional site tag; when given (and `pattern` is left at its
+#'   default) only files whose name contains the tag are used - a shortcut
+#'   for `pattern = paste0("*{variable}*", site, "*")`.
+#' @param outfile optional path; if given the daily frame is written there
+#'   with [utils::write.csv()] (`row.names = FALSE`, dates as `"%Y-%m-%d"`).
+#' @param ... further arguments for [extract_era5_hourly_met()]: `lon`,
+#'   `lat`, `geom`, `years`, `months`, `variables`, `method`,
+#'   `precip_units`, `pressure_units`, `pattern`, `max_dist_km`, `area_crs`,
+#'   `fill_gaps`, `verbose`.
 #'
-#' @return A data frame of daily meteorology.
+#' @return a daily data frame: the time column first, then one column per
+#'   variable in the chosen `format`, plus the temperature min / max columns
+#'   when `minmax = TRUE`. The `lon` / `lat` / `tz` / `method` attributes
+#'   from [extract_era5_hourly_met()] are carried through.
 #'
-#' @seealso [standardise_met()], which recognises the raw ERA5 nc short names
-#' (`t2m`, `d2m`, `ssrd`, `strd`) directly.
+#' @seealso [extract_era5_hourly_met()] for the hourly frame and the full
+#'   argument list, [met_to_daily()] for the aggregation, [standardise_met()]
+#'   which recognises the `"raw"` ERA5 short names directly.
 #'
-#' @importFrom stats aggregate
-#' @importFrom utils data
-#'
+#' @examples
+#' \dontrun{
+#' lon <- 98.67591; lat <- 2.637047            # Lake Toba, Indonesia
+#' met <- convert_era5_netcdf(
+#'   path = "data/test", lon = lon, lat = lat, years = 2024,
+#'   variables = "2m_temperature")
+#' }
 #' @export
-convert_era5_netcdf <- function(lat,
-                                lon,
-                                variable = c("10m_u_component_of_wind",
-                                             "10m_v_component_of_wind",
-                                             "2m_dewpoint_temperature",
-                                             "2m_temperature", "snowfall",
-                                             "surface_pressure",
-                                             "surface_solar_radiation_downwards",
-                                             "surface_thermal_radiation_downwards",
-                                             "total_precipitation"),
-                                year = 2022,
-                                site  = "test",
-                                path = ".",
-                                format = "AEME") {
+convert_era5_netcdf <- function(path,
+                                format = c("AEME", "LER", "raw"),
+                                tz = "UTC",
+                                minmax = TRUE,
+                                min_frac = 0.5,
+                                site = NULL,
+                                outfile = NULL,
+                                ...) {
 
-  for (pkg in c("stars", "sf")) {
-    if (!requireNamespace(pkg, quietly = TRUE)) {
-      stop("Package '", pkg, "' is required for convert_era5_netcdf(). ",
-           "Install it with install.packages('", pkg, "').", call. = FALSE)
+  format <- match.arg(format)
+  dots   <- list(...)
+  if (!is.null(site) && is.null(dots$pattern))
+    dots$pattern <- paste0("*{variable}*", site, "*")
+
+  ## ---- hourly frame, always in AEME naming (one aggregation path) -----
+  hourly <- do.call(extract_era5_hourly_met,
+                    c(list(path = path, tz = tz, format = "AEME",
+                           digits = NULL), dots))
+
+  ## ---- aggregate to daily -------------------------------------------
+  daily <- met_to_daily(hourly, tz = tz, min_frac = min_frac)
+
+  if (isTRUE(minmax)) {
+    day <- as.Date(as.POSIXct(hourly$Date),
+                   tz = .tz_or_utc(tz, attr(hourly, "tz")))
+    rng <- function(x, fun)
+      if (all(is.na(x))) NA_real_ else fun(x, na.rm = TRUE)
+    for (p in list(c("MET_tmpair", "MET_airmin", "MET_airmax"),
+                   c("MET_tmpdew", "MET_dewmin", "MET_dewmax"))) {
+      if (!p[1] %in% names(hourly)) next
+      lo <- tapply(hourly[[p[1]]], day, rng, fun = min)
+      hi <- tapply(hourly[[p[1]]], day, rng, fun = max)
+      ix <- match(as.character(daily$Date), names(lo))
+      daily[[p[2]]] <- unname(as.numeric(lo)[ix])
+      daily[[p[3]]] <- unname(as.numeric(hi)[ix])
     }
   }
 
-  # Load Rdata
-  utils::data("era5_ref_table", package = "metscale", envir = environment())
+  ## ---- rename to the requested convention --------------------------
+  if (format != "AEME") daily <- .era5_rename_from_aeme(daily, format)
 
-  coords <- data.frame(lat = lat, lon = lon)
-  coords_sf <- sf::st_as_sf(coords, coords = c("lon", "lat"), crs = 4326)
-  timestep <- "hourly"
+  for (a in c("lon", "lat", "tz", "method", "n_cells"))
+    if (!is.null(attr(hourly, a))) attr(daily, a) <- attr(hourly, a)
 
-  out <- lapply(variable, \(v) {
-    out2 <- lapply(year, \(y) {
-      file <- file.path(path, paste0("era5", "_", v, "_", timestep, "_", y,
-                                     "_", site, ".nc"))
-
-      if (!file.exists(file)) {
-        stop("Missing the file: ", file)
-      }
-      var <- era5_ref_table$nc[era5_ref_table$era5 == v]
-      dat <- stars::read_ncdf(file, var = var)
-      if (var %in% c("t2m", "d2m")) {
-        met_max <- stats::aggregate(dat, by = "day", FUN = max)
-        met_min <- stats::aggregate(dat, by = "day", FUN = min)
-        met <- stats::aggregate(dat, by = "day", FUN = mean)
-      } else if(var %in% c("sf", "tp")) {
-        met <- stats::aggregate(dat, by = "day", FUN = max)
-      } else if(var %in% c("ssrd", "strd")) {
-        met <- stats::aggregate(dat, by = "day", FUN = function(x) {
-          max(x) / (24 * 60 * 60)
-          }
-          )
-      } else {
-        met <- stats::aggregate(dat, by = "day", FUN = mean)
-      }
-
-      df <- met |>
-        stars::st_extract(coords_sf) |>
-        as.data.frame()
-      df <- df[, c("time", var)]
-      if (var %in% c("t2m", "d2m")) {
-        df_max <- met_max |>
-          stars::st_extract(coords_sf) |>
-          as.data.frame()
-        df_max <- df_max[, var]
-        df_min <- met_min |>
-          stars::st_extract(coords_sf) |>
-          as.data.frame()
-        df_min <- df_min[, var]
-        df[[paste0(var, "_max")]] <- df_max
-        df[[paste0(var, "_min")]] <- df_min
-      }
-      return(df)
-    })
-    out2 <- dplyr::bind_rows(out2)
-  })
-
-  met <- Reduce(merge, out)
-
-  if ("t2m" %in% colnames(met) | "d2m" %in% colnames(met)) {
-    sel_cols <- which(colnames(met) %in% c("t2m", "d2m"))
-    sel_cols <- grepl("t2m|d2m", names(met))
-    met[, sel_cols] <- met[, sel_cols] - 273.15
-  }
-  if ("tp" %in% colnames(met) | "sf" %in% colnames(met)) {
-    sel_cols <- which(colnames(met) %in% c("tp", "sf"))
-    met[, sel_cols] <- met[,sel_cols] * 1000 # Convert to m
+  if (!is.null(outfile)) {
+    w <- daily
+    w[[1]] <- format(w[[1]], "%Y-%m-%d")
+    utils::write.csv(w, outfile, row.names = FALSE)
+    if (!isFALSE(dots$verbose))
+      message("Wrote ", nrow(w), " rows x ", ncol(w), " cols to ", outfile)
   }
 
-  if (format == "AEME") {
-    names(met)[!grepl("min|max", names(met))] <- era5_ref_table$aeme[match(
-      names(met[!grepl("min|max", names(met))]), era5_ref_table$nc)]
-
-    names(met)[names(met) == "d2m_max"] <- "MET_dewmax"
-    names(met)[names(met) == "d2m_min"] <- "MET_dewmin"
-    names(met)[names(met) == "t2m_max"] <- "MET_airmax"
-    names(met)[names(met) == "t2m_min"] <- "MET_airmin"
-
-  } else if (format == "LER") {
-    names(met) <- era5_ref_table$ler[match(names(met), era5_ref_table$nc)]
-  }
-
-  return(met)
+  daily
 }

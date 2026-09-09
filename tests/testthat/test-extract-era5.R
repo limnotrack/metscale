@@ -189,6 +189,35 @@ test_that(".grib files are dispatched to the terra backend", {
   }
 })
 
+test_that("convert_era5_netcdf() aggregates the hourly frame to daily", {
+  skip_if_not_installed("ncdf4")
+  g <- make_grid(n_hours = 72)                       # 3 full UTC days
+  dir <- tempfile("era5daily"); dir.create(dir)
+  write_nc(file.path(dir, "cds_2m_temperature_hourly_2024_1_toba.nc"),
+           g, field(g, 288, 4), nc_name = "t2m")
+
+  daily <- convert_era5_netcdf(
+    path = dir, lon = 176.2, lat = -38.0, years = 2024,
+    variables = "2m_temperature", method = "nearest", tz = "UTC",
+    verbose = FALSE)
+
+  expect_s3_class(daily, "data.frame")
+  expect_true(inherits(daily$Date, "Date"))
+  expect_identical(nrow(daily), 3L)
+  expect_true(all(c("MET_tmpair", "MET_airmin", "MET_airmax") %in% names(daily)))
+  expect_true(all(daily$MET_airmin <= daily$MET_tmpair &
+                    daily$MET_tmpair <= daily$MET_airmax))
+
+  # `site` tag narrows the file match; `format = "raw"` renames + datetime col
+  raw <- convert_era5_netcdf(
+    path = dir, lon = 176.2, lat = -38.0, years = 2024,
+    variables = "2m_temperature", method = "nearest", tz = "UTC",
+    site = "toba", format = "raw", minmax = FALSE, verbose = FALSE)
+  expect_true("datetime" %in% names(raw))
+  expect_true("t2m" %in% names(raw))
+  expect_equal(unname(raw$t2m), unname(daily$MET_tmpair))
+})
+
 test_that("extract_era5_lake_met() takes a polygon and labels the result", {
   skip_if_not_installed("ncdf4")
   skip_if_not_installed("sf")

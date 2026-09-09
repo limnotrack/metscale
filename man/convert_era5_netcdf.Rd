@@ -2,47 +2,80 @@
 % Please edit documentation in R/convert_era5_netcdf.R
 \name{convert_era5_netcdf}
 \alias{convert_era5_netcdf}
-\title{Convert ERA5 netCDF files to AEME or LER daily meteorology}
+\title{Convert downloaded ERA5 files to a daily meteorology data frame}
 \usage{
 convert_era5_netcdf(
-  lat,
-  lon,
-  variable = c("10m_u_component_of_wind", "10m_v_component_of_wind",
-    "2m_dewpoint_temperature", "2m_temperature", "snowfall", "surface_pressure",
-    "surface_solar_radiation_downwards", "surface_thermal_radiation_downwards",
-    "total_precipitation"),
-  year = 2022,
-  site = "test",
-  path = ".",
-  format = "AEME"
+  path,
+  format = c("AEME", "LER", "raw"),
+  tz = "UTC",
+  minmax = TRUE,
+  min_frac = 0.5,
+  site = NULL,
+  outfile = NULL,
+  ...
 )
 }
 \arguments{
-\item{lat}{numeric; latitude.}
+\item{path}{directory holding the ERA5 files (netCDF or GRIB).}
 
-\item{lon}{numeric; longitude.}
+\item{format}{\code{"AEME"} (default, \verb{MET_*} names, a \code{Date} column), \code{"LER"}
+(LakeEnsemblR names) or \code{"raw"} (ERA5 short names); \code{"LER"} and \code{"raw"}
+return a \code{datetime} column.}
 
-\item{variable}{string with ERA5 variable names e.g. "2m_temperature",
-"total_precipitation".}
+\item{tz}{output / aggregation time zone: passed to
+\code{\link[=extract_era5_hourly_met]{extract_era5_hourly_met()}} and used to assign calendar days. Default
+\code{"UTC"}.}
 
-\item{year}{numeric; vector with years.}
+\item{minmax}{add daily min / max columns for air and dewpoint
+temperature (\code{MET_airmin} / \code{MET_airmax} / \code{MET_dewmin} / \code{MET_dewmax}
+in AEME naming). Default \code{TRUE}.}
 
-\item{site}{string of site name which was used when downloading the data.}
+\item{min_frac}{drop days with fewer than this fraction of the expected
+hourly records, passed to \code{\link[=met_to_daily]{met_to_daily()}}. Default \code{0.5}; set \code{0} to
+keep every day.}
 
-\item{path}{filepath to where the downloaded ERA5 ncdf files are stored.}
+\item{site}{optional site tag; when given (and \code{pattern} is left at its
+default) only files whose name contains the tag are used - a shortcut
+for \code{pattern = paste0("*{variable}*", site, "*")}.}
 
-\item{format}{string; Either "AEME" or "LER". Default is "AEME".}
+\item{outfile}{optional path; if given the daily frame is written there
+with \code{\link[utils:write.csv]{utils::write.csv()}} (\code{row.names = FALSE}, dates as \code{"\%Y-\%m-\%d"}).}
+
+\item{...}{further arguments for \code{\link[=extract_era5_hourly_met]{extract_era5_hourly_met()}}: \code{lon},
+\code{lat}, \code{geom}, \code{years}, \code{months}, \code{variables}, \code{method},
+\code{precip_units}, \code{pressure_units}, \code{pattern}, \code{max_dist_km}, \code{area_crs},
+\code{fill_gaps}, \code{verbose}.}
 }
 \value{
-A data frame of daily meteorology.
+a daily data frame: the time column first, then one column per
+variable in the chosen \code{format}, plus the temperature min / max columns
+when \code{minmax = TRUE}. The \code{lon} / \code{lat} / \code{tz} / \code{method} attributes
+from \code{\link[=extract_era5_hourly_met]{extract_era5_hourly_met()}} are carried through.
 }
 \description{
-Aggregate downloaded hourly ERA5 netCDF files to a daily data frame in
-AEME (\verb{MET_*}) or LakeEnsemblR column names, sampling at a point.
+Convenience wrapper that runs \code{\link[=extract_era5_hourly_met]{extract_era5_hourly_met()}} over the ERA5
+files in \code{path} (netCDF, or GRIB as written by \code{\link[=download_era5_cds]{download_era5_cds()}}) and
+aggregates the model-ready hourly frame to daily with \code{\link[=met_to_daily]{met_to_daily()}}:
+precipitation and snowfall are summed, everything else is averaged, and -
+unless \code{minmax = FALSE} - daily minimum and maximum air and dewpoint
+temperature are added.
 
-Requires the suggested packages \pkg{stars} and \pkg{sf}.
+File discovery (by name \code{pattern}), the per-file reader backend, spatial
+sampling (\code{method}), de-accumulation of the flux variables, unit
+conversion and the UTC -> \code{tz} shift are all handled by
+\code{\link[=extract_era5_hourly_met]{extract_era5_hourly_met()}}; see there for the details and for the
+arguments passed through \code{...}.
+}
+\examples{
+\dontrun{
+lon <- 98.67591; lat <- 2.637047            # Lake Toba, Indonesia
+met <- convert_era5_netcdf(
+  path = "data/test", lon = lon, lat = lat, years = 2024,
+  variables = "2m_temperature")
+}
 }
 \seealso{
-\code{\link[=standardise_met]{standardise_met()}}, which recognises the raw ERA5 nc short names
-(\code{t2m}, \code{d2m}, \code{ssrd}, \code{strd}) directly.
+\code{\link[=extract_era5_hourly_met]{extract_era5_hourly_met()}} for the hourly frame and the full
+argument list, \code{\link[=met_to_daily]{met_to_daily()}} for the aggregation, \code{\link[=standardise_met]{standardise_met()}}
+which recognises the \code{"raw"} ERA5 short names directly.
 }
