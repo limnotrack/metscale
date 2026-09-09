@@ -125,7 +125,7 @@ already matches `download_era5_cds()` names, so nothing else is needed:
 
 ```{r grib-hourly}
 met <- extract_era5_hourly_met(
-  path = "data/test", lon = lon, lat = lat, years = year, variables = "2m_temperature"
+  path = path, lon = lon, lat = lat, years = year, variables = "2m_temperature"
   )
 ```
 
