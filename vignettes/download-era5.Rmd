@@ -62,7 +62,7 @@ For the full hourly ERA5 / ERA5-Land archive you need a free
 account, linked to your session with `ecmwfr::wf_set_key()`. See the
 [ecmwfr documentation](https://bluegreen-labs.github.io/ecmwfr/#use).
 
-```{r cds-key echo=FALSE, eval=TRUE, message=FALSE}
+```{r cds-key, eval=FALSE}
 ecmwfr::wf_set_key(key = Sys.getenv("ECMWF_KEY"),
                    user = Sys.getenv("ECMWF_USER"))
 ```
@@ -79,6 +79,8 @@ Indonesia (2m temperature, January 2024).
 ```{r echo=FALSE}
 files <- system.file("extdata/era5/reanalysis-era5-land_2m_temperature_hourly_2024_1_toba.grib",
                      package = "metscale")
+year <- 2024
+month <- 1
 ```
 
 ```{r cds-download, message=FALSE, eval=FALSE}
