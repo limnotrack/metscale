@@ -75,7 +75,7 @@ with this function, form monthly change factors, and apply them to a
 <span>  experiments <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bilinear"</span>, <span class="st">"nearest"</span><span class="op">)</span>,</span>
 <span>  calendar <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"auto"</span>, <span class="st">"365_day"</span>, <span class="st">"360_day"</span>, <span class="st">"366_day"</span>, <span class="st">"standard"</span><span class="op">)</span>,</span>
-<span>  tz <span class="op">=</span> <span class="st">"Etc/GMT-12"</span>,</span>
+<span>  tz <span class="op">=</span> <span class="st">"UTC"</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -119,7 +119,7 @@ real dates, so it has no 29 February (and, for <code>360_day</code>, no 31st).</
 
 <dt id="arg-tz">tz<a class="anchor" aria-label="anchor" href="#arg-tz"></a></dt>
 <dd><p>time zone recorded on the result; the series is daily and
-carries no time of day. Default <code>"Etc/GMT-12"</code>.</p></dd>
+carries no time of day. Default <code>"UTC"</code>.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>

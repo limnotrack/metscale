@@ -43,7 +43,7 @@ bias_correct_daily_baseline(
 - tz:
 
   timezone for day boundaries and solar geometry; defaults to the `tz`
-  attribute of `era5`.
+  attribute of `era5`, else `"UTC"`.
 
 - expand:
 

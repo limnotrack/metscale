@@ -20,7 +20,7 @@ met_to_daily(met, tz = NULL, min_frac = 0.5)
 - tz:
 
   time zone used to assign calendar days (default: the `tz` attribute of
-  `met`, else `"Etc/GMT-12"`).
+  `met`, else `"UTC"`).
 
 - min_frac:
 
@@ -34,7 +34,7 @@ daily data frame, `Date` first.
 ## Examples
 
 ``` r
-h <- data.frame(Date = seq(as.POSIXct("2024-01-01", tz = "Etc/GMT-12"),
+h <- data.frame(Date = seq(as.POSIXct("2024-01-01", tz = "UTC"),
                            by = "hour", length.out = 48),
                 MET_tmpair = rnorm(48, 15), MET_pprain = 0.1)
 met_to_daily(h)

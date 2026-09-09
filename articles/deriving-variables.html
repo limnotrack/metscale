@@ -244,10 +244,11 @@ from the AEME originals, because getting them wrong is silent:</p>
 <ul>
 <li>
 <strong>Time zone.</strong> <code><a href="../reference/expand_met.html">expand_met()</a></code>,
-<code><a href="../reference/calc_cc.html">calc_cc()</a></code> and <code><a href="../reference/estimate_hourly_swr.html">estimate_hourly_swr()</a></code> take an
-explicit <code>tz</code> and phase the solar geometry to it. Pass the
-zone your timestamps are in; the default is fixed NZST
-(<code>"Etc/GMT-12"</code>).</li>
+<code><a href="../reference/calc_cc.html">calc_cc()</a></code> and <code><a href="../reference/estimate_hourly_swr.html">estimate_hourly_swr()</a></code> phase the
+solar geometry to <code>tz</code>. It defaults to the <code>tz</code>
+attribute of the input, else <code>"UTC"</code>; pass the zone your
+timestamps are in (e.g. <code>"Etc/GMT-12"</code> for fixed NZST) to put
+the shortwave peak at local noon.</li>
 <li>
 <strong>Pressure units.</strong> Derived <code>MET_prsttn</code> /
 <code>MET_prmslp</code> are in <strong>Pa</strong>.</li>

@@ -17,7 +17,7 @@ calc_cc(
   lat,
   lon,
   elev = 0,
-  tz = "Etc/GMT-12"
+  tz = NULL
 )
 ```
 
@@ -54,7 +54,8 @@ calc_cc(
 - tz:
 
   timezone that `datetime` refers to; used to expand daily dates into
-  hours. Default `"Etc/GMT-12"` (fixed NZST).
+  hours. Default `NULL`, which uses the `tzone` attribute of `datetime`
+  when it carries one, otherwise `"UTC"`.
 
 ## Value
 
@@ -69,6 +70,6 @@ d <- data.frame(Date = seq(as.Date("2024-01-01"), by = "day", length.out = 10),
                 airt = 18, swr = c(300, 120, 280, 90, 310, 150, 200, 260, 80, 290))
 calc_cc(d$Date, airt = d$airt, swr = d$swr, relh = 70,
         lat = -38.08, lon = 176.27, elev = 280)
-#>  [1] 0.6228089 1.0000000 0.6799412 1.0000000 0.5865212 0.9796327 0.8749737
-#>  [8] 0.7294371 1.0000000 0.6420259
+#>  [1] 0.6223841 1.0000000 0.6795007 1.0000000 0.5858550 0.9794251 0.8746414
+#>  [8] 0.7288839 1.0000000 0.6412350
 ```

@@ -13,7 +13,7 @@ but does not require it.
 
 | Task | Function |
 |----|----|
-| Download ERA5 forcing: global daily point series (ISIMIP3a, no key), hourly GRIB from the Copernicus Data Store, or aggregate downloaded netCDF to daily | [`download_era5_isimip_point()`](http://limnotrack.com/metscale/reference/download_era5_isimip_point.md), [`download_era5_cds()`](http://limnotrack.com/metscale/reference/download_era5_cds.md) / [`read_era5_grib_point()`](http://limnotrack.com/metscale/reference/read_era5_grib_point.md), [`convert_era5_netcdf()`](http://limnotrack.com/metscale/reference/convert_era5_netcdf.md) |
+| Download ERA5 forcing: global daily point series (ISIMIP3a, no key), hourly GRIB from the Copernicus Data Store, or aggregate downloaded netCDF / GRIB to daily | [`download_era5_isimip_point()`](http://limnotrack.com/metscale/reference/download_era5_isimip_point.md), [`download_era5_cds()`](http://limnotrack.com/metscale/reference/download_era5_cds.md) / [`read_era5_grib_point()`](http://limnotrack.com/metscale/reference/read_era5_grib_point.md), [`convert_era5_netcdf()`](http://limnotrack.com/metscale/reference/convert_era5_netcdf.md) |
 | Extract hourly ERA5-Land at a point or averaged over a lake polygon, in standard units and time zone | [`extract_era5_hourly_met()`](http://limnotrack.com/metscale/reference/extract_era5_hourly_met.md), [`extract_era5_lake_met()`](http://limnotrack.com/metscale/reference/extract_era5_lake_met.md) |
 | Standardise a table of measured meteorology (names, units, timezone, resampling) | [`prepare_obs_met()`](http://limnotrack.com/metscale/reference/prepare_obs_met.md), [`standardise_met()`](http://limnotrack.com/metscale/reference/standardise_met.md), [`guess_met_vars()`](http://limnotrack.com/metscale/reference/guess_met_vars.md) |
 | Translate a met table between the AEME `MET_*` scheme and CF / CMIP short names and units (`tas`, `pr`, `sfcWind`, …) | [`met_to_cf()`](http://limnotrack.com/metscale/reference/met_to_cf.md), [`cf_to_met()`](http://limnotrack.com/metscale/reference/cf_to_met.md) |
@@ -37,9 +37,12 @@ Columns follow the AEME `MET_*` scheme
 (from), `MET_wnduvu` / `MET_wnduvv` m/s, `MET_pprain` / `MET_ppsnow` mm
 per timestep.
 
-The default time zone `"Etc/GMT-12"` is fixed NZST (UTC+12, no daylight
-saving), which keeps a gap-free regular sub-daily series; pass any other
-zone via the `tz` argument.
+The default time zone is `"UTC"`, matching the clock ERA5, ERA5-Land and
+CMIP6 are published on, so the extractors apply no hidden shift. Every
+`tz` argument resolves the same way: an explicit value first, then the
+`tz` attribute carried on the input, then UTC. Pass a fixed-offset zone
+such as `"Etc/GMT-12"` (NZST, UTC+12, no daylight saving) to work in
+local time while keeping a gap-free regular sub-daily series.
 
 [`met_to_cf()`](http://limnotrack.com/metscale/reference/met_to_cf.md)
 maps this scheme onto the CF / CMIP short names and units (`MET_tmpair`

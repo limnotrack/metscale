@@ -22,7 +22,7 @@ extract_cmip6_point(
   experiments = NULL,
   method = c("bilinear", "nearest"),
   calendar = c("auto", "365_day", "360_day", "366_day", "standard"),
-  tz = "Etc/GMT-12",
+  tz = "UTC",
   verbose = TRUE
 )
 ```
@@ -64,7 +64,7 @@ extract_cmip6_point(
 - tz:
 
   time zone recorded on the result; the series is daily and carries no
-  time of day. Default `"Etc/GMT-12"`.
+  time of day. Default `"UTC"`.
 
 - verbose:
 

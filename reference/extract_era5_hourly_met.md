@@ -24,7 +24,7 @@ extract_era5_hourly_met(
     "surface_thermal_radiation_downwards", "total_precipitation", "snowfall",
     "surface_pressure"),
   method = c("bilinear", "nearest", "area", "area_mean"),
-  tz = "Etc/GMT-12",
+  tz = "UTC",
   format = c("AEME", "LER", "raw"),
   precip_units = c("mm/hr", "m/day", "mm/day", "m/hr"),
   pressure_units = c("Pa", "hPa"),
@@ -33,7 +33,8 @@ extract_era5_hourly_met(
   area_crs = 2193,
   outfile = NULL,
   fill_gaps = TRUE,
-  verbose = TRUE
+  verbose = TRUE,
+  digits = 6
 )
 ```
 
@@ -74,8 +75,9 @@ extract_era5_hourly_met(
 
 - tz:
 
-  output time zone. Default `"Etc/GMT-12"` = fixed NZST (UTC+12, no
-  daylight saving) which keeps a gap-free regular hourly series. Use
+  output time zone, applied to the native-UTC ERA5 time stamps. Default
+  `"UTC"` (no shift). Pass a fixed-offset zone such as `"Etc/GMT-12"`
+  (NZST) to keep a gap-free regular hourly series in local time, or
   `"Pacific/Auckland"` for civil NZ time (a duplicated hour every April,
   a missing hour every September).
 
@@ -133,6 +135,11 @@ extract_era5_hourly_met(
 - verbose:
 
   print progress messages.
+
+- digits:
+
+  significant digits for the output dataframe (default `6`). Set to
+  `NULL` to keep the full precision of the ERA5 data.
 
 ## Value
 

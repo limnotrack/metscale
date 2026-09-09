@@ -17,7 +17,7 @@ prepare_obs_met(
   col_map = NULL,
   datetime_col = NULL,
   date_format = NULL,
-  tz = "Etc/GMT-12",
+  tz = NULL,
   resample = c("none", "hour", "day"),
   interval = c("ending", "beginning"),
   derive = TRUE,
@@ -59,9 +59,11 @@ prepare_obs_met(
 
 - tz:
 
-  time zone of the observation timestamps. Default `"Etc/GMT-12"` =
-  fixed NZST (matches the extractor default). Use `"Pacific/Auckland"`
-  if the logger recorded civil time with DST.
+  time zone of the observation timestamps. Default `"UTC"` (matches the
+  [`extract_era5_hourly_met()`](http://limnotrack.com/metscale/reference/extract_era5_hourly_met.md)
+  default). Set this to the zone your logger actually recorded in - e.g.
+  `"Etc/GMT-12"` for fixed NZST, or `"Pacific/Auckland"` if it recorded
+  civil time with DST.
 
 - resample:
 

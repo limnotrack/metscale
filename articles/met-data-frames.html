@@ -239,16 +239,23 @@ roughly 15–20% low;</li>
 <div class="section level2">
 <h2 id="time-zone">Time zone<a class="anchor" aria-label="anchor" href="#time-zone"></a>
 </h2>
-<p>The default <code>"Etc/GMT-12"</code> is <strong>fixed</strong> NZST
-(UTC+12, no daylight saving). A fixed offset keeps a gap-free regular
-sub-daily series — civil time with DST has a missing hour in spring and
-a doubled hour in autumn, which breaks a strict hourly index. Use
+<p>Every <code>tz</code> argument defaults to <code>"UTC"</code> — the
+clock ERA5, ERA5-Land and CMIP6 are published on — and resolves the same
+way everywhere: an explicit value first, then the <code>tz</code>
+attribute carried on the input frame (so a zone set once on the
+extractor output flows through the pipeline), then UTC. The extractors
+therefore return the reanalysis with no hidden shift.</p>
+<p>To work in local time, pass the zone your timestamps are in. Prefer a
+<strong>fixed</strong> offset such as <code>"Etc/GMT-12"</code> (NZST,
+UTC+12, no daylight saving): it keeps a gap-free regular sub-daily
+series, whereas civil time with DST has a missing hour in spring and a
+doubled hour in autumn that breaks a strict hourly index. Use
 <code>"Pacific/Auckland"</code> only if your logger recorded civil time
 and you need it back in civil time.</p>
 <p>The zone is not cosmetic: <code><a href="../reference/expand_met.html">expand_met()</a></code>,
-<code><a href="../reference/calc_cc.html">calc_cc()</a></code> and <code><a href="../reference/estimate_hourly_swr.html">estimate_hourly_swr()</a></code> take an
-explicit <code>tz</code> and evaluate the solar geometry at the matching
-UTC instants, so the shortwave peak lands at local solar noon. (The AEME
+<code><a href="../reference/calc_cc.html">calc_cc()</a></code> and <code><a href="../reference/estimate_hourly_swr.html">estimate_hourly_swr()</a></code> evaluate
+the solar geometry at the matching UTC instants, so with a local
+<code>tz</code> the shortwave peak lands at local solar noon. (The AEME
 versions of these routines forced the session zone to UTC and read the
 wall clock, shifting the solar curve by the UTC offset — 12 h for New
 Zealand. <code>metscale</code> fixes that; pass the zone your timestamps

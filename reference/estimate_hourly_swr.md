@@ -12,7 +12,7 @@ estimate_hourly_swr(
   met,
   lat,
   lon,
-  tz = "Etc/GMT-12",
+  tz = NULL,
   timestep = c("hour", "3hour"),
   interval = c("ending", "beginning", "instant"),
   cloud = 0
@@ -33,7 +33,9 @@ estimate_hourly_swr(
 - tz:
 
   timezone the daily dates refer to, and in which the sub-daily output
-  is labelled. Default `"Etc/GMT-12"` (fixed NZST, no daylight saving).
+  is labelled. Default `NULL`, which uses the `tz` attribute of `met`
+  when present, otherwise `"UTC"`. Pass a fixed-offset zone such as
+  `"Etc/GMT-12"` (NZST) to place the peak at local solar noon.
 
 - timestep:
 
@@ -78,10 +80,10 @@ met <- data.frame(Date = seq(as.Date("2024-01-01"), by = "day",
 hr <- estimate_hourly_swr(met, lat = -38.08, lon = 176.27)
 head(hr)
 #>                  Date MET_radswd
-#> 1 2024-01-01 00:00:00          0
-#> 2 2024-01-01 01:00:00          0
-#> 3 2024-01-01 02:00:00          0
-#> 4 2024-01-01 03:00:00          0
-#> 5 2024-01-01 04:00:00          0
-#> 6 2024-01-01 05:00:00          0
+#> 1 2024-01-01 00:00:00   831.2122
+#> 2 2024-01-01 01:00:00   843.2225
+#> 3 2024-01-01 02:00:00   805.7792
+#> 4 2024-01-01 03:00:00   721.3019
+#> 5 2024-01-01 04:00:00   596.4732
+#> 6 2024-01-01 05:00:00   441.8697
 ```

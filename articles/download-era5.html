@@ -103,7 +103,26 @@ runs to 2021.</p>
 <span><span class="va">vars</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"MET_tmpair"</span>, <span class="st">"MET_pprain"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">met</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/download_era5_isimip_point.html">download_era5_isimip_point</a></span><span class="op">(</span><span class="va">lon</span>, <span class="va">lat</span>, <span class="va">years</span>, <span class="va">vars</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">met</span><span class="op">)</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Submitting job to ISIMIP server (4 files requested)</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Job submitted in 2s | id=214bee8ef101706884cbc5691bc7f4b5fdac17d7 | status=finished</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Server finished preparing 4 files in 0s</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Downloading isimip-download-214bee8ef101706884cbc5691bc7f4b5fdac17d7.zip</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Downloaded 0.6 MB in 2s (0.3 MB/s)</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Extracting archive to /tmp/RtmpaMW7r8/isimip-download-214bee8ef101706884cbc5691bc7f4b5fdac17d7</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Extracted 4 files in 0s</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> Reading 2 variables from NetCDF files</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span>   tas: 2 files, 4018 records (0s)</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span>   pr: 2 files, 4018 records (0s)</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Read all variables in 1s</span></span>
+<span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> Done: 4018 daily records for 2 variables (total 5s)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">met</span><span class="op">)</span></span>
+<span><span class="co">#&gt;       Date              MET_tmpair      MET_pprain    </span></span>
+<span><span class="co">#&gt;  Min.   :2011-01-01   Min.   :19.02   Min.   : 0.000  </span></span>
+<span><span class="co">#&gt;  1st Qu.:2013-10-01   1st Qu.:21.36   1st Qu.: 2.328  </span></span>
+<span><span class="co">#&gt;  Median :2016-07-01   Median :21.84   Median : 5.551  </span></span>
+<span><span class="co">#&gt;  Mean   :2016-07-01   Mean   :21.86   Mean   : 7.417  </span></span>
+<span><span class="co">#&gt;  3rd Qu.:2019-04-01   3rd Qu.:22.35   3rd Qu.:10.339  </span></span>
+<span><span class="co">#&gt;  Max.   :2021-12-31   Max.   :24.30   Max.   :76.598</span></span></code></pre></div>
 <p>Variable names may be given either as AEME <code>MET_*</code> names
 or as the ERA5/CMIP short names (<code>tas</code>, <code>pr</code>,
 <code>sfcwind</code>, <code>rsds</code>, <code>ps</code>,
@@ -115,66 +134,99 @@ names and units (degC, mm/day, …).</p>
 <h2 id="gridded-grib-from-the-copernicus-data-store-download_era5_cds">2. Gridded GRIB from the Copernicus Data Store —
 <code>download_era5_cds()</code><a class="anchor" aria-label="anchor" href="#gridded-grib-from-the-copernicus-data-store-download_era5_cds"></a>
 </h2>
-<p>For the full hourly ERA5 / ERA5-Land archive you need a free <a href="https://cds.climate.copernicus.eu/user/register" class="external-link">Copernicus Data
+<p>For the full hourly ERA5 / ERA5-Land archive you need a free <a href="https://www.ecmwf.int/user/login" class="external-link">ECMWF account</a> or a free <a href="https://cds.climate.copernicus.eu/user/register" class="external-link">Copernicus Data
 Store (CDS)</a> account, linked to your session with
 <code><a href="https://rdrr.io/pkg/ecmwfr/man/wf_set_key.html" class="external-link">ecmwfr::wf_set_key()</a></code>. See the <a href="https://bluegreen-labs.github.io/ecmwfr/#use" class="external-link">ecmwfr
 documentation</a>.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">ecmwfr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ecmwfr/man/wf_set_key.html" class="external-link">wf_set_key</a></span><span class="op">(</span>key <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"CDS_KEY"</span><span class="op">)</span>, user <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"CDS_USER"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">ecmwfr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ecmwfr/man/wf_set_key.html" class="external-link">wf_set_key</a></span><span class="op">(</span>key <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"ECMWF_KEY"</span><span class="op">)</span>,</span>
+<span>                   user <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"ECMWF_USER"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><code><a href="../reference/download_era5_cds.html">download_era5_cds()</a></code> submits one CDS request per variable
 / year / month (batched, up to 20 at a time) and writes a GRIB file per
 request. Give it a point plus <code>buffer</code>, or an <code>sf</code>
 polygon as <code>shape</code>.</p>
+<p>File downloads can be slow, so this vignette uses a pre-downloaded
+GRIB for demonstration. The <code>extdata</code> directory contains a
+single GRIB for Lake Toba, Indonesia (2m temperature, January 2024).</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">year</span> <span class="op">&lt;-</span> <span class="fl">2024</span></span>
 <span><span class="va">month</span> <span class="op">&lt;-</span> <span class="fl">1</span></span>
 <span><span class="va">files</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/download_era5_cds.html">download_era5_cds</a></span><span class="op">(</span></span>
 <span>  lat <span class="op">=</span> <span class="va">lat</span>, lon <span class="op">=</span> <span class="va">lon</span>, year <span class="op">=</span> <span class="va">year</span>, month <span class="op">=</span> <span class="va">month</span>,</span>
 <span>  variable <span class="op">=</span> <span class="st">"2m_temperature"</span>, path <span class="op">=</span> <span class="st">"data/test"</span>, site <span class="op">=</span> <span class="st">"toba"</span>,</span>
-<span>  user <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"CDS_USER"</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span><span class="va">files</span></span></code></pre></div>
+<span>  user <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html" class="external-link">Sys.getenv</a></span><span class="op">(</span><span class="st">"ECMWF_USER"</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">files</span></span>
+<span><span class="co">#&gt; [1] "/home/runner/work/_temp/Library/metscale/extdata/era5/reanalysis-era5-land_2m_temperature_hourly_2024_1_toba.grib"</span></span></code></pre></div>
+<p>Plot the downloaded GRIB with <code>plot_era5_grib()</code>:</p>
+<p>Plot the point location on the downloaded grid with
+<code><a href="../reference/plot_extract_grid.html">plot_extract_grid()</a></code>:</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">path</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/basename.html" class="external-link">dirname</a></span><span class="op">(</span><span class="va">files</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/plot_extract_grid.html">plot_extract_grid</a></span><span class="op">(</span>path <span class="op">=</span> <span class="va">path</span>, lon <span class="op">=</span> <span class="va">lon</span>, lat <span class="op">=</span> <span class="va">lat</span>, method <span class="op">=</span> <span class="st">"bilinear"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="download-era5_files/figure-html/unnamed-chunk-4-1.png" class="r-plt" alt="" width="576"></p>
 <p>Extract a point (or polygon-mean) time series from the downloaded
 GRIB with <code><a href="../reference/read_era5_grib_point.html">read_era5_grib_point()</a></code>:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/read_era5_grib_point.html">read_era5_grib_point</a></span><span class="op">(</span>file <span class="op">=</span> <span class="va">files</span>, lat <span class="op">=</span> <span class="va">lat</span>, lon <span class="op">=</span> <span class="va">lon</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span></span>
+<span><span class="co">#&gt;              DateTime    value units     variable short_name</span></span>
+<span><span class="co">#&gt; 1 2024-01-01 00:00:00 292.0308     C     2T_0-SFC         2T</span></span>
+<span><span class="co">#&gt; 2 2024-01-01 01:00:00 292.5305     C 2T_0-SFC_2_1         2T</span></span>
+<span><span class="co">#&gt; 3 2024-01-01 02:00:00 293.2504     C 2T_0-SFC_2_2         2T</span></span>
+<span><span class="co">#&gt; 4 2024-01-01 03:00:00 294.5083     C 2T_0-SFC_2_3         2T</span></span>
+<span><span class="co">#&gt; 5 2024-01-01 04:00:00 295.8975     C 2T_0-SFC_2_4         2T</span></span>
+<span><span class="co">#&gt; 6 2024-01-01 05:00:00 297.0063     C 2T_0-SFC_2_5         2T</span></span></code></pre></div>
 <p>For a model-ready hourly frame (de-accumulated fluxes, standard
 units, a time-zone shift) point <code><a href="../reference/extract_era5_hourly_met.html">extract_era5_hourly_met()</a></code>
 at the download directory instead. It picks the reader from each file’s
 extension, so the GRIB written above is read directly; the default
 <code>pattern</code> (<code>"{variable}"</code>) already matches
 <code><a href="../reference/download_era5_cds.html">download_era5_cds()</a></code> names, so nothing else is needed:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">met</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extract_era5_hourly_met.html">extract_era5_hourly_met</a></span><span class="op">(</span></span>
-<span>  path <span class="op">=</span> <span class="st">"data/test"</span>, lon <span class="op">=</span> <span class="va">lon</span>, lat <span class="op">=</span> <span class="va">lat</span>, years <span class="op">=</span> <span class="va">year</span><span class="op">)</span></span></code></pre></div>
+<span>  path <span class="op">=</span> <span class="va">path</span>, lon <span class="op">=</span> <span class="va">lon</span>, lat <span class="op">=</span> <span class="va">lat</span>, years <span class="op">=</span> <span class="va">year</span>, variables <span class="op">=</span> <span class="st">"2m_temperature"</span></span>
+<span>  <span class="op">)</span></span>
+<span><span class="co">#&gt;   2m_temperature: 1 file(s), 4 grid cell(s)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="aggregate-downloaded-netcdf-to-daily-convert_era5_netcdf">3. Aggregate downloaded netCDF to daily —
-<code>convert_era5_netcdf()</code><a class="anchor" aria-label="anchor" href="#aggregate-downloaded-netcdf-to-daily-convert_era5_netcdf"></a>
+<h2 id="aggregate-downloaded-era5-to-daily-convert_era5_netcdf">3. Aggregate downloaded ERA5 to daily —
+<code>convert_era5_netcdf()</code><a class="anchor" aria-label="anchor" href="#aggregate-downloaded-era5-to-daily-convert_era5_netcdf"></a>
 </h2>
-<p>If you already have hourly ERA5 netCDF on disk (named
-<code>era5_&lt;variable&gt;_hourly_&lt;year&gt;_&lt;site&gt;.nc</code>),
-<code><a href="../reference/convert_era5_netcdf.html">convert_era5_netcdf()</a></code> aggregates each variable to daily
-with the appropriate function (mean, or max for precipitation /
-radiation) and returns AEME or LakeEnsemblR columns.</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<p>For a <strong>daily</strong> frame,
+<code><a href="../reference/convert_era5_netcdf.html">convert_era5_netcdf()</a></code> wraps the step above: it runs
+<code><a href="../reference/extract_era5_hourly_met.html">extract_era5_hourly_met()</a></code> over the files in
+<code>path</code> (netCDF or GRIB — the same file discovery, spatial
+sampling, de-accumulation, unit conversion and time-zone shift) and then
+aggregates to daily with <code><a href="../reference/met_to_daily.html">met_to_daily()</a></code> (rain and snow
+summed, everything else averaged). Extra <code>...</code> arguments are
+forwarded to <code><a href="../reference/extract_era5_hourly_met.html">extract_era5_hourly_met()</a></code>.</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">met</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/convert_era5_netcdf.html">convert_era5_netcdf</a></span><span class="op">(</span></span>
-<span>  lat <span class="op">=</span> <span class="va">lat</span>, lon <span class="op">=</span> <span class="va">lon</span>, year <span class="op">=</span> <span class="fl">2022</span><span class="op">:</span><span class="fl">2023</span>,</span>
-<span>  path <span class="op">=</span> <span class="st">"era5_netcdf"</span>, site <span class="op">=</span> <span class="st">"toba"</span>, format <span class="op">=</span> <span class="st">"AEME"</span></span>
-<span><span class="op">)</span></span></code></pre></div>
-<p>For <strong>hourly</strong> extraction from ERA5-Land netCDF — with
-de-accumulation of the flux variables, unit conversion and a time-zone
-shift — use <code><a href="../reference/extract_era5_hourly_met.html">extract_era5_hourly_met()</a></code> /
-<code><a href="../reference/extract_era5_lake_met.html">extract_era5_lake_met()</a></code> instead.</p>
-<p><code>convert_era5_netcdf(format = "raw")</code> returns the ERA5 nc
+<span>  path <span class="op">=</span> <span class="va">path</span>, lon <span class="op">=</span> <span class="va">lon</span>, lat <span class="op">=</span> <span class="va">lat</span>, years <span class="op">=</span> <span class="va">year</span>,</span>
+<span>  variables <span class="op">=</span> <span class="st">"2m_temperature"</span>, site <span class="op">=</span> <span class="st">"toba"</span>, format <span class="op">=</span> <span class="st">"AEME"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt;   2m_temperature: 1 file(s), 4 grid cell(s)</span></span></code></pre></div>
+<p>Unless <code>minmax = FALSE</code>, daily minimum and maximum air and
+dewpoint temperature are added (<code>MET_airmin</code> /
+<code>MET_airmax</code> / <code>MET_dewmin</code> /
+<code>MET_dewmax</code>).</p>
+<p><code>convert_era5_netcdf(format = "raw")</code> returns the ERA5
 short names (<code>t2m</code>, <code>d2m</code>, <code>ssrd</code>,
-<code>strd</code>, …), which <code><a href="../reference/standardise_met.html">standardise_met()</a></code> recognises
-directly:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">met_raw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/convert_era5_netcdf.html">convert_era5_netcdf</a></span><span class="op">(</span>lat <span class="op">=</span> <span class="va">lat</span>, lon <span class="op">=</span> <span class="va">lon</span>, year <span class="op">=</span> <span class="fl">2022</span>,</span>
-<span>                               path <span class="op">=</span> <span class="st">"era5_netcdf"</span>, format <span class="op">=</span> <span class="st">"raw"</span><span class="op">)</span></span>
-<span><span class="va">std</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/standardise_met.html">standardise_met</a></span><span class="op">(</span><span class="va">met_raw</span><span class="op">)</span></span></code></pre></div>
+<code>strd</code>, …) with a <code>datetime</code> column, which
+<code><a href="../reference/standardise_met.html">standardise_met()</a></code> recognises directly:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">met_raw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/convert_era5_netcdf.html">convert_era5_netcdf</a></span><span class="op">(</span>path <span class="op">=</span> <span class="va">path</span>, lon <span class="op">=</span> <span class="va">lon</span>, lat <span class="op">=</span> <span class="va">lat</span>, years <span class="op">=</span> <span class="va">year</span>,</span>
+<span>                               variables <span class="op">=</span> <span class="st">"2m_temperature"</span>, format <span class="op">=</span> <span class="st">"raw"</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   2m_temperature: 1 file(s), 4 grid cell(s)</span></span>
+<span><span class="va">std</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/standardise_met.html">standardise_met</a></span><span class="op">(</span><span class="va">met_raw</span><span class="op">)</span></span>
+<span><span class="co">#&gt; date column: datetime -&gt; Date</span></span>
+<span><span class="co">#&gt; Warning in standardise_met(met_raw): 2 column(s) could not be matched and are</span></span>
+<span><span class="co">#&gt; left unchanged: t2m_min, t2m_max</span></span>
+<span><span class="co">#&gt; renamed: t2m -&gt; MET_tmpair</span></span>
+<span><span class="co">#&gt; Warning in standardise_met(met_raw): required variable(s) absent after</span></span>
+<span><span class="co">#&gt; renaming: MET_radswd, MET_wndspd, MET_pprain</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="next-steps">Next steps<a class="anchor" aria-label="anchor" href="#next-steps"></a>

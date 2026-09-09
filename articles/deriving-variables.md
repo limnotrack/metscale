@@ -204,9 +204,10 @@ originals, because getting them wrong is silent:
   [`expand_met()`](http://limnotrack.com/metscale/reference/expand_met.md),
   [`calc_cc()`](http://limnotrack.com/metscale/reference/calc_cc.md) and
   [`estimate_hourly_swr()`](http://limnotrack.com/metscale/reference/estimate_hourly_swr.md)
-  take an explicit `tz` and phase the solar geometry to it. Pass the
-  zone your timestamps are in; the default is fixed NZST
-  (`"Etc/GMT-12"`).
+  phase the solar geometry to `tz`. It defaults to the `tz` attribute of
+  the input, else `"UTC"`; pass the zone your timestamps are in (e.g.
+  `"Etc/GMT-12"` for fixed NZST) to put the shortwave peak at local
+  noon.
 - **Pressure units.** Derived `MET_prsttn` / `MET_prmslp` are in **Pa**.
 - **Wind components.**
   [`ds2uv()`](http://limnotrack.com/metscale/reference/ds2uv.md) /

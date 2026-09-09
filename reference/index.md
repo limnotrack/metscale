@@ -30,7 +30,7 @@
   : Clear-sky downwelling shortwave radiation
 
 - [`convert_era5_netcdf()`](http://limnotrack.com/metscale/reference/convert_era5_netcdf.md)
-  : Convert ERA5 netCDF files to AEME or LER daily meteorology
+  : Convert downloaded ERA5 files to a daily meteorology data frame
 
 - [`dewpoint_to_rh()`](http://limnotrack.com/metscale/reference/dewpoint_to_rh.md)
   : Relative humidity from air temperature and dew point
@@ -91,6 +91,9 @@
 - [`mslp_from_station()`](http://limnotrack.com/metscale/reference/mslp_from_station.md)
   [`station_from_mslp()`](http://limnotrack.com/metscale/reference/mslp_from_station.md)
   : Convert between station and mean sea level pressure
+
+- [`plot_era5()`](http://limnotrack.com/metscale/reference/plot_era5.md)
+  : Quick-look plot of an ERA5 / ERA5-Land GRIB or netCDF file
 
 - [`plot_extract_grid()`](http://limnotrack.com/metscale/reference/plot_extract_grid.md)
   : Preview the extraction grid, cells and geometry before extracting

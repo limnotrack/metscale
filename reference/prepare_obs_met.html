@@ -68,7 +68,7 @@ the two can be joined on <code>Date</code> in <code><a href="fit_met_bias_correc
 <span>  col_map <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  datetime_col <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  date_format <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  tz <span class="op">=</span> <span class="st">"Etc/GMT-12"</span>,</span>
+<span>  tz <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  resample <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"none"</span>, <span class="st">"hour"</span>, <span class="st">"day"</span><span class="op">)</span>,</span>
 <span>  interval <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ending"</span>, <span class="st">"beginning"</span><span class="op">)</span>,</span>
 <span>  derive <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -110,9 +110,10 @@ column to dates.</p></dd>
 
 
 <dt id="arg-tz">tz<a class="anchor" aria-label="anchor" href="#arg-tz"></a></dt>
-<dd><p>time zone of the observation timestamps. Default
-<code>"Etc/GMT-12"</code> = fixed NZST (matches the extractor default). Use
-<code>"Pacific/Auckland"</code> if the logger recorded civil time with DST.</p></dd>
+<dd><p>time zone of the observation timestamps. Default <code>"UTC"</code>
+(matches the <code><a href="extract_era5_hourly_met.html">extract_era5_hourly_met()</a></code> default). Set this to the
+zone your logger actually recorded in - e.g. <code>"Etc/GMT-12"</code> for fixed
+NZST, or <code>"Pacific/Auckland"</code> if it recorded civil time with DST.</p></dd>
 
 
 <dt id="arg-resample">resample<a class="anchor" aria-label="anchor" href="#arg-resample"></a></dt>

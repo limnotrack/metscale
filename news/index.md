@@ -23,7 +23,16 @@ and the u/v swap in
   – hourly ERA5 GRIB from the Copernicus Data Store and point extraction
   from it.
 - [`convert_era5_netcdf()`](http://limnotrack.com/metscale/reference/convert_era5_netcdf.md)
-  – aggregate a downloaded ERA5 netCDF to daily.
+  – daily aggregation: a thin wrapper that runs
+  [`extract_era5_hourly_met()`](http://limnotrack.com/metscale/reference/extract_era5_hourly_met.md)
+  (so it now reads netCDF **or GRIB**, with the same `pattern` discovery
+  and spatial sampling) and aggregates to daily with
+  [`met_to_daily()`](http://limnotrack.com/metscale/reference/met_to_daily.md),
+  adding daily min/max air and dewpoint temperature. Takes `path` first
+  and forwards `...` to
+  [`extract_era5_hourly_met()`](http://limnotrack.com/metscale/reference/extract_era5_hourly_met.md);
+  the old `year` / `variable` (singular) / positional `file` arguments
+  are gone.
 - [`extract_era5_hourly_met()`](http://limnotrack.com/metscale/reference/extract_era5_hourly_met.md)
   /
   [`extract_era5_lake_met()`](http://limnotrack.com/metscale/reference/extract_era5_lake_met.md)
@@ -42,6 +51,16 @@ and the u/v swap in
     now takes a lake polygon (an `sf`/`sfc` or a path to one) plus
     optional `id` / `name` labels; the old `lakes` / `layer` id-and-name
     lookup has been removed.
+- [`plot_era5()`](http://limnotrack.com/metscale/reference/plot_era5.md)
+  – a quick-look viewer for a downloaded ERA5 / ERA5-Land GRIB or netCDF
+  file: for every variable it finds (GRIB bands grouped by
+  `GRIB_ELEMENT`, netCDF by sub-dataset), a map of the field aggregated
+  over time next to a time series – the grid mean, or a bilinear sample
+  at `point`. `time` maps a single step instead; a vector of files is
+  stacked in time. Returns a per-variable summary data frame with the
+  aggregated maps and series attached, or a `ggplot` for
+  `engine = "ggplot2"`. Reads with `terra`, matching the extractors’
+  backend rule.
 - [`plot_extract_grid()`](http://limnotrack.com/metscale/reference/plot_extract_grid.md)
   – a pre-extraction sanity-check map: the ERA5-Land grid around a point
   or lake polygon, the cell(s) each `method` would sample shaded by
@@ -132,6 +151,28 @@ and the u/v swap in
   [`solar_zenith_angle()`](http://limnotrack.com/metscale/reference/solar_zenith_angle.md),
   [`clear_sky_swr()`](http://limnotrack.com/metscale/reference/clear_sky_swr.md),
   [`estimate_hourly_swr()`](http://limnotrack.com/metscale/reference/estimate_hourly_swr.md).
+
+### Time zones
+
+- Every function that takes a `tz` argument now defaults to **UTC**, the
+  zone ERA5, ERA5-Land and CMIP6 are published in, instead of the
+  New-Zealand-specific `"Etc/GMT-12"`.
+  [`extract_era5_hourly_met()`](http://limnotrack.com/metscale/reference/extract_era5_hourly_met.md)
+  /
+  [`extract_era5_lake_met()`](http://limnotrack.com/metscale/reference/extract_era5_lake_met.md)
+  therefore return the reanalysis on its native clock with no hidden
+  shift; convert downstream by passing `tz` (e.g. `"Etc/GMT-12"` for
+  fixed NZST) or with
+  [`lubridate::with_tz()`](https://lubridate.tidyverse.org/reference/with_tz.html).
+- `tz` is resolved consistently across the package: an explicit argument
+  wins, otherwise the `tz` attribute carried on the input data frame (or
+  a POSIXct’s `tzone`), otherwise UTC.
+  [`expand_met()`](http://limnotrack.com/metscale/reference/expand_met.md),
+  [`calc_cc()`](http://limnotrack.com/metscale/reference/calc_cc.md) and
+  [`estimate_hourly_swr()`](http://limnotrack.com/metscale/reference/estimate_hourly_swr.md)
+  previously ignored that attribute and hard-coded `"Etc/GMT-12"`, which
+  could re-introduce the solar phase-shift on non-NZ input; they now
+  follow the attribute like the rest.
 
 ### Vignettes
 

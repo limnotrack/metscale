@@ -168,19 +168,26 @@ What it adds over
 
 ## Time zone
 
-The default `"Etc/GMT-12"` is **fixed** NZST (UTC+12, no daylight
-saving). A fixed offset keeps a gap-free regular sub-daily series —
-civil time with DST has a missing hour in spring and a doubled hour in
-autumn, which breaks a strict hourly index. Use `"Pacific/Auckland"`
-only if your logger recorded civil time and you need it back in civil
-time.
+Every `tz` argument defaults to `"UTC"` — the clock ERA5, ERA5-Land and
+CMIP6 are published on — and resolves the same way everywhere: an
+explicit value first, then the `tz` attribute carried on the input frame
+(so a zone set once on the extractor output flows through the pipeline),
+then UTC. The extractors therefore return the reanalysis with no hidden
+shift.
+
+To work in local time, pass the zone your timestamps are in. Prefer a
+**fixed** offset such as `"Etc/GMT-12"` (NZST, UTC+12, no daylight
+saving): it keeps a gap-free regular sub-daily series, whereas civil
+time with DST has a missing hour in spring and a doubled hour in autumn
+that breaks a strict hourly index. Use `"Pacific/Auckland"` only if your
+logger recorded civil time and you need it back in civil time.
 
 The zone is not cosmetic:
 [`expand_met()`](http://limnotrack.com/metscale/reference/expand_met.md),
 [`calc_cc()`](http://limnotrack.com/metscale/reference/calc_cc.md) and
 [`estimate_hourly_swr()`](http://limnotrack.com/metscale/reference/estimate_hourly_swr.md)
-take an explicit `tz` and evaluate the solar geometry at the matching
-UTC instants, so the shortwave peak lands at local solar noon. (The AEME
+evaluate the solar geometry at the matching UTC instants, so with a
+local `tz` the shortwave peak lands at local solar noon. (The AEME
 versions of these routines forced the session zone to UTC and read the
 wall clock, shifting the solar curve by the UTC offset — 12 h for New
 Zealand. `metscale` fixes that; pass the zone your timestamps are

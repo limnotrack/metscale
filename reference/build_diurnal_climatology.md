@@ -24,7 +24,7 @@ build_diurnal_climatology(hourly, tz = NULL, vars = NULL, n_sub = 24)
 - tz:
 
   timezone in which the diurnal cycle is expressed. Defaults to the `tz`
-  attribute of `hourly`, else `"Etc/GMT-12"`.
+  attribute of `hourly`, else `"UTC"`.
 
 - vars:
 
@@ -45,7 +45,7 @@ variable), `n_days` per month, `tz` and `n_sub`.
 ``` r
 set.seed(1)
 h <- data.frame(
-  Date = seq(as.POSIXct("2024-01-01", tz = "Etc/GMT-12"),
+  Date = seq(as.POSIXct("2024-01-01", tz = "UTC"),
              by = "hour", length.out = 24 * 60),
   MET_tmpair = 15 + 5 * sin(seq_len(24 * 60) * 2 * pi / 24) + rnorm(24 * 60))
 dc <- build_diurnal_climatology(h)

@@ -73,7 +73,7 @@ apply_met_bias_correction(
 
   timezone for the solar geometry in
   [`expand_met()`](http://limnotrack.com/metscale/reference/expand_met.md);
-  defaults to the `tz` attribute of `era5`, else `"Etc/GMT-12"`.
+  defaults to the `tz` attribute of `era5`, else `"UTC"`.
 
 - verbose:
 

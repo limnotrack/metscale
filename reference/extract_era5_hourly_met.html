@@ -75,7 +75,7 @@ CSV.</p>
 <span>    <span class="st">"surface_thermal_radiation_downwards"</span>, <span class="st">"total_precipitation"</span>, <span class="st">"snowfall"</span>,</span>
 <span>    <span class="st">"surface_pressure"</span><span class="op">)</span>,</span>
 <span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bilinear"</span>, <span class="st">"nearest"</span>, <span class="st">"area"</span>, <span class="st">"area_mean"</span><span class="op">)</span>,</span>
-<span>  tz <span class="op">=</span> <span class="st">"Etc/GMT-12"</span>,</span>
+<span>  tz <span class="op">=</span> <span class="st">"UTC"</span>,</span>
 <span>  format <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"AEME"</span>, <span class="st">"LER"</span>, <span class="st">"raw"</span><span class="op">)</span>,</span>
 <span>  precip_units <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mm/hr"</span>, <span class="st">"m/day"</span>, <span class="st">"mm/day"</span>, <span class="st">"m/hr"</span><span class="op">)</span>,</span>
 <span>  pressure_units <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"Pa"</span>, <span class="st">"hPa"</span><span class="op">)</span>,</span>
@@ -84,7 +84,8 @@ CSV.</p>
 <span>  area_crs <span class="op">=</span> <span class="fl">2193</span>,</span>
 <span>  outfile <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  fill_gaps <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  digits <span class="op">=</span> <span class="fl">6</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -126,10 +127,11 @@ standard meteorological forcing variables.</p></dd>
 
 
 <dt id="arg-tz">tz<a class="anchor" aria-label="anchor" href="#arg-tz"></a></dt>
-<dd><p>output time zone. Default <code>"Etc/GMT-12"</code> = fixed NZST
-(UTC+12, no daylight saving) which keeps a gap-free regular hourly
-series. Use <code>"Pacific/Auckland"</code> for civil NZ time (a duplicated hour
-every April, a missing hour every September).</p></dd>
+<dd><p>output time zone, applied to the native-UTC ERA5 time
+stamps. Default <code>"UTC"</code> (no shift). Pass a fixed-offset zone such as
+<code>"Etc/GMT-12"</code> (NZST) to keep a gap-free regular hourly series in
+local time, or <code>"Pacific/Auckland"</code> for civil NZ time (a duplicated
+hour every April, a missing hour every September).</p></dd>
 
 
 <dt id="arg-format">format<a class="anchor" aria-label="anchor" href="#arg-format"></a></dt>
@@ -186,6 +188,11 @@ use a projection appropriate to your region.</p></dd>
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>print progress messages.</p></dd>
+
+
+<dt id="arg-digits">digits<a class="anchor" aria-label="anchor" href="#arg-digits"></a></dt>
+<dd><p>significant digits for the output dataframe (default <code>6</code>).
+Set to <code>NULL</code> to keep the full precision of the ERA5 data.</p></dd>
 
 </dl></div>
     <div class="section level2">

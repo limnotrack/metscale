@@ -12,7 +12,7 @@ and snowfall.
 ## Usage
 
 ``` r
-expand_met(met, lat, lon, elev = 0, tz = "Etc/GMT-12", round_to = 3)
+expand_met(met, lat, lon, elev = 0, tz = NULL, round_to = 3)
 ```
 
 ## Arguments
@@ -34,8 +34,8 @@ expand_met(met, lat, lon, elev = 0, tz = "Etc/GMT-12", round_to = 3)
 
   timezone the timestamps refer to, used for the solar geometry in
   [`calc_cc()`](http://limnotrack.com/metscale/reference/calc_cc.md).
-  Default `"Etc/GMT-12"` (fixed NZST). Ignored when `MET_cldcvr` is
-  supplied.
+  Default `NULL`, which uses the `tz` attribute of `met` when present,
+  otherwise `"UTC"`. Ignored when `MET_cldcvr` is supplied.
 
 - round_to:
 
@@ -65,11 +65,11 @@ met <- data.frame(Date = seq(as.Date("2024-01-01"), by = "day", length.out = 5),
                   MET_pprain = c(0, 12, 0, 25, 0))
 expand_met(met, lat = -38.08, lon = 176.27, elev = 280)
 #>         Date MET_radswd MET_radlwd MET_cldcvr MET_tmpair MET_humrel MET_tmpdew
-#> 1 2024-01-01        300    285.810      0.623         18         70     12.447
+#> 1 2024-01-01        300    285.714      0.622         18         70     12.447
 #> 2 2024-01-02        120    386.860      1.000         16         85     13.479
-#> 3 2024-01-03        280    303.589      0.681         19         65     12.272
+#> 3 2024-01-03        280    303.478      0.680         19         65     12.272
 #> 4 2024-01-04         90    381.536      1.000         15         90     13.373
-#> 5 2024-01-05        310    285.604      0.589         20         60     12.000
+#> 5 2024-01-05        310    285.457      0.588         20         60     12.000
 #>   MET_prvapr MET_prsttn MET_prmslp MET_wndspd MET_wnddir MET_wnduvu MET_wnduvv
 #> 1     14.452   98067.55   101333.4          3        180          0          3
 #> 2     15.459   98046.62   101334.7          5        180          0          5

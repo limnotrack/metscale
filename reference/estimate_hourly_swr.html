@@ -61,7 +61,7 @@ shaped diurnal cycle with genuine night-time zeros.</p>
 <span>  <span class="va">met</span>,</span>
 <span>  <span class="va">lat</span>,</span>
 <span>  <span class="va">lon</span>,</span>
-<span>  tz <span class="op">=</span> <span class="st">"Etc/GMT-12"</span>,</span>
+<span>  tz <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  timestep <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"hour"</span>, <span class="st">"3hour"</span><span class="op">)</span>,</span>
 <span>  interval <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ending"</span>, <span class="st">"beginning"</span>, <span class="st">"instant"</span><span class="op">)</span>,</span>
 <span>  cloud <span class="op">=</span> <span class="fl">0</span></span>
@@ -83,8 +83,9 @@ daily resolution) and <code>MET_radswd</code> in W m-2.</p></dd>
 
 <dt id="arg-tz">tz<a class="anchor" aria-label="anchor" href="#arg-tz"></a></dt>
 <dd><p>timezone the daily dates refer to, and in which the sub-daily
-output is labelled. Default <code>"Etc/GMT-12"</code> (fixed NZST, no daylight
-saving).</p></dd>
+output is labelled. Default <code>NULL</code>, which uses the <code>tz</code> attribute of
+<code>met</code> when present, otherwise <code>"UTC"</code>. Pass a fixed-offset zone such as
+<code>"Etc/GMT-12"</code> (NZST) to place the peak at local solar noon.</p></dd>
 
 
 <dt id="arg-timestep">timestep<a class="anchor" aria-label="anchor" href="#arg-timestep"></a></dt>
@@ -130,12 +131,12 @@ at local solar noon rather than being offset by the UTC offset.</p>
 <span class="r-in"><span><span class="va">hr</span> <span class="op">&lt;-</span> <span class="fu">estimate_hourly_swr</span><span class="op">(</span><span class="va">met</span>, lat <span class="op">=</span> <span class="op">-</span><span class="fl">38.08</span>, lon <span class="op">=</span> <span class="fl">176.27</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">hr</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                  Date MET_radswd</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1 2024-01-01 00:00:00          0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 2024-01-01 01:00:00          0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3 2024-01-01 02:00:00          0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4 2024-01-01 03:00:00          0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 5 2024-01-01 04:00:00          0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 6 2024-01-01 05:00:00          0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1 2024-01-01 00:00:00   831.2122</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2 2024-01-01 01:00:00   843.2225</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3 2024-01-01 02:00:00   805.7792</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 2024-01-01 03:00:00   721.3019</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 5 2024-01-01 04:00:00   596.4732</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 6 2024-01-01 05:00:00   441.8697</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

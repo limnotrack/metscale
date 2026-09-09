@@ -84,7 +84,7 @@ disaggregate_met_to_hourly(
 - tz:
 
   timezone of `daily` and of the output. Defaults to the `tz` attribute
-  of `daily`, then of `donor`, else `"Etc/GMT-12"`.
+  of `daily`, then of `donor`, else `"UTC"`.
 
 - analogue_window:
 
@@ -178,7 +178,7 @@ for the reverse operation.
 ``` r
 set.seed(1)
 ## donor: two years of synthetic hourly data with a diurnal cycle
-t <- seq(as.POSIXct("2022-01-01", tz = "Etc/GMT-12"), by = "hour",
+t <- seq(as.POSIXct("2022-01-01", tz = "UTC"), by = "hour",
          length.out = 24 * 730)
 hr <- as.integer(format(t, "%H"))
 donor <- data.frame(Date = t,

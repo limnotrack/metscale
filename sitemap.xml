@@ -40,6 +40,7 @@
 <url><loc>http://limnotrack.com/metscale/reference/met_wind_at_height.html</loc></url>
 <url><loc>http://limnotrack.com/metscale/reference/metscale-package.html</loc></url>
 <url><loc>http://limnotrack.com/metscale/reference/mslp_from_station.html</loc></url>
+<url><loc>http://limnotrack.com/metscale/reference/plot_era5.html</loc></url>
 <url><loc>http://limnotrack.com/metscale/reference/plot_extract_grid.html</loc></url>
 <url><loc>http://limnotrack.com/metscale/reference/prepare_obs_met.html</loc></url>
 <url><loc>http://limnotrack.com/metscale/reference/read_era5_grib_point.html</loc></url>

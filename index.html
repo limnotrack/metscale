@@ -86,7 +86,7 @@
 </tr></thead>
 <tbody>
 <tr>
-<td>Download ERA5 forcing: global daily point series (ISIMIP3a, no key), hourly GRIB from the Copernicus Data Store, or aggregate downloaded netCDF to daily</td>
+<td>Download ERA5 forcing: global daily point series (ISIMIP3a, no key), hourly GRIB from the Copernicus Data Store, or aggregate downloaded netCDF / GRIB to daily</td>
 <td>
 <code><a href="reference/download_era5_isimip_point.html">download_era5_isimip_point()</a></code>, <code><a href="reference/download_era5_cds.html">download_era5_cds()</a></code> / <code><a href="reference/read_era5_grib_point.html">read_era5_grib_point()</a></code>, <code><a href="reference/convert_era5_netcdf.html">convert_era5_netcdf()</a></code>
 </td>
@@ -164,7 +164,7 @@
 <h2 id="standard-variables">Standard variables<a class="anchor" aria-label="anchor" href="#standard-variables"></a>
 </h2>
 <p>Columns follow the AEME <code>MET_*</code> scheme (<code><a href="reference/met_vars.html">met_vars()</a></code>): <code>MET_radswd</code> W/m2, <code>MET_radlwd</code> W/m2, <code>MET_cldcvr</code> fraction, <code>MET_tmpair</code> degC, <code>MET_humrel</code> %, <code>MET_tmpdew</code> degC, <code>MET_prvapr</code> hPa, <code>MET_prsttn</code> / <code>MET_prmslp</code> Pa, <code>MET_wndspd</code> m/s, <code>MET_wnddir</code> degrees (from), <code>MET_wnduvu</code> / <code>MET_wnduvv</code> m/s, <code>MET_pprain</code> / <code>MET_ppsnow</code> mm per timestep.</p>
-<p>The default time zone <code>"Etc/GMT-12"</code> is fixed NZST (UTC+12, no daylight saving), which keeps a gap-free regular sub-daily series; pass any other zone via the <code>tz</code> argument.</p>
+<p>The default time zone is <code>"UTC"</code>, matching the clock ERA5, ERA5-Land and CMIP6 are published on, so the extractors apply no hidden shift. Every <code>tz</code> argument resolves the same way: an explicit value first, then the <code>tz</code> attribute carried on the input, then UTC. Pass a fixed-offset zone such as <code>"Etc/GMT-12"</code> (NZST, UTC+12, no daylight saving) to work in local time while keeping a gap-free regular sub-daily series.</p>
 <p><code><a href="reference/met_to_cf.html">met_to_cf()</a></code> maps this scheme onto the CF / CMIP short names and units (<code>MET_tmpair</code> degC → <code>tas</code> K, <code>MET_pprain</code> mm/step → <code>pr</code> kg m-2 s-1, <code>MET_wndspd</code> → <code>sfcWind</code>, <code>MET_radswd</code> → <code>rsds</code>, …) for handing data to tools that expect that vocabulary; <code><a href="reference/cf_to_met.html">cf_to_met()</a></code> is the inverse.</p>
 </div>
 <div class="section level2">
