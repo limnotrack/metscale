@@ -26,9 +26,10 @@
 #'   strings contain a time (a `:`), only date-time formats are considered
 #'   so that a stray time-less row does not silently collapse the whole
 #'   column to dates.
-#' @param tz time zone of the observation timestamps. Default
-#'   `"Etc/GMT-12"` = fixed NZST (matches the extractor default). Use
-#'   `"Pacific/Auckland"` if the logger recorded civil time with DST.
+#' @param tz time zone of the observation timestamps. Default `"UTC"`
+#'   (matches the [extract_era5_hourly_met()] default). Set this to the
+#'   zone your logger actually recorded in - e.g. `"Etc/GMT-12"` for fixed
+#'   NZST, or `"Pacific/Auckland"` if it recorded civil time with DST.
 #' @param resample `"none"` (keep native step, de-duplicated), `"hour"`
 #'   (mean per hour; rain/snow summed) or `"day"` (daily mean; rain/snow
 #'   summed; `Date` returned as class `Date`).
@@ -64,7 +65,7 @@ prepare_obs_met <- function(obs,
                             col_map = NULL,
                             datetime_col = NULL,
                             date_format = NULL,
-                            tz = "Etc/GMT-12",
+                            tz = NULL,
                             resample = c("none", "hour", "day"),
                             interval = c("ending", "beginning"),
                             derive = TRUE,
@@ -84,6 +85,7 @@ prepare_obs_met <- function(obs,
   }
   obs <- as.data.frame(obs, check.names = FALSE)
   if (!nrow(obs)) stop("'obs' has no rows.")
+  tz <- .tz_or_utc(tz, attr(obs, "tz"))
 
   ## ---- timestamp -----------------------------------------------------
   if (is.null(datetime_col)) {

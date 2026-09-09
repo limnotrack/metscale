@@ -80,7 +80,8 @@
 #' @param lat,lon decimal degrees.
 #' @param elev elevation, m above sea level.
 #' @param tz timezone that `datetime` refers to; used to expand daily dates
-#'   into hours. Default `"Etc/GMT-12"` (fixed NZST).
+#'   into hours. Default `NULL`, which uses the `tzone` attribute of
+#'   `datetime` when it carries one, otherwise `"UTC"`.
 #'
 #' @return numeric vector of cloud cover fractions (0-1), same length as
 #'   `datetime`. Values that cannot be inferred (measured shortwave at or
@@ -93,8 +94,9 @@
 #'         lat = -38.08, lon = 176.27, elev = 280)
 #' @export
 calc_cc <- function(datetime, airt, swr, relh = NULL, dewt = NULL,
-                    lat, lon, elev = 0, tz = "Etc/GMT-12") {
+                    lat, lon, elev = 0, tz = NULL) {
 
+  tz <- .tz_or_utc(tz, attr(datetime, "tzone"))
   n <- length(datetime)
   stopifnot(length(swr) == n)
   if (is.null(dewt)) {

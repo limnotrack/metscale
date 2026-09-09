@@ -5,5 +5,7 @@ utils::globalVariables(c(
   "era5",
   "era5_ref_table",
   # plot_extract_grid(): ggplot2 aes() column
-  "weight"
+  "weight",
+  # plot_era5(): ggplot2 aes() columns
+  "x", "y", "value"
 ))

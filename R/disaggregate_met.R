@@ -88,7 +88,7 @@
 #' @param hourly data frame with `Date` (POSIXct) and `MET_*` columns, e.g.
 #'   from [extract_era5_lake_met()].
 #' @param tz timezone in which the diurnal cycle is expressed. Defaults to
-#'   the `tz` attribute of `hourly`, else `"Etc/GMT-12"`.
+#'   the `tz` attribute of `hourly`, else `"UTC"`.
 #' @param vars variables to summarise; default all `MET_*` columns present.
 #' @param n_sub steps per day (24 hourly, 8 three-hourly).
 #'
@@ -99,7 +99,7 @@
 #' @examples
 #' set.seed(1)
 #' h <- data.frame(
-#'   Date = seq(as.POSIXct("2024-01-01", tz = "Etc/GMT-12"),
+#'   Date = seq(as.POSIXct("2024-01-01", tz = "UTC"),
 #'              by = "hour", length.out = 24 * 60),
 #'   MET_tmpair = 15 + 5 * sin(seq_len(24 * 60) * 2 * pi / 24) + rnorm(24 * 60))
 #' dc <- build_diurnal_climatology(h)
@@ -108,7 +108,7 @@
 build_diurnal_climatology <- function(hourly, tz = NULL, vars = NULL,
                                       n_sub = 24) {
   stopifnot(is.data.frame(hourly), "Date" %in% names(hourly))
-  tz <- tz %||% attr(hourly, "tz") %||% "Etc/GMT-12"
+  tz <- .tz_or_utc(tz, attr(hourly, "tz"))
   if (is.null(vars)) vars <- grep("^MET_", names(hourly), value = TRUE)
   vars <- intersect(vars, names(hourly))
   if (!length(vars)) stop("no MET_* columns found in 'hourly'")
@@ -223,7 +223,7 @@ print.diurnal_climatology <- function(x, ...) {
 #'   attributes of `daily` or `donor` when `NULL`.
 #' @param elev elevation, m, used only when `expand = TRUE`.
 #' @param tz timezone of `daily` and of the output. Defaults to the `tz`
-#'   attribute of `daily`, then of `donor`, else `"Etc/GMT-12"`.
+#'   attribute of `daily`, then of `donor`, else `"UTC"`.
 #' @param analogue_window half-width, in days of the year, of the donor
 #'   pool for `method = "fragments"` (default 15).
 #' @param match_on_value rank candidate donor days by similarity of their
@@ -253,7 +253,7 @@ print.diurnal_climatology <- function(x, ...) {
 #' @examples
 #' set.seed(1)
 #' ## donor: two years of synthetic hourly data with a diurnal cycle
-#' t <- seq(as.POSIXct("2022-01-01", tz = "Etc/GMT-12"), by = "hour",
+#' t <- seq(as.POSIXct("2022-01-01", tz = "UTC"), by = "hour",
 #'          length.out = 24 * 730)
 #' hr <- as.integer(format(t, "%H"))
 #' donor <- data.frame(Date = t,
@@ -291,7 +291,7 @@ disaggregate_met_to_hourly <- function(daily, donor,
 
   stopifnot(is.data.frame(daily), is.data.frame(donor),
             "Date" %in% names(daily), "Date" %in% names(donor))
-  tz  <- tz  %||% attr(daily, "tz") %||% attr(donor, "tz") %||% "Etc/GMT-12"
+  tz  <- .tz_or_utc(tz, attr(daily, "tz"), attr(donor, "tz"))
   lat <- lat %||% attr(daily, "lat") %||% attr(donor, "lat")
   lon <- lon %||% attr(daily, "lon") %||% attr(donor, "lon")
   if (swr == "clearsky" && (is.null(lat) || is.null(lon)))

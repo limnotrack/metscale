@@ -121,8 +121,9 @@ clear_sky_swr <- function(datetime, lat, lon, cloud = 0) {
 #'   daily resolution) and `MET_radswd` in W m-2.
 #' @param lat,lon position in decimal degrees.
 #' @param tz timezone the daily dates refer to, and in which the sub-daily
-#'   output is labelled. Default `"Etc/GMT-12"` (fixed NZST, no daylight
-#'   saving).
+#'   output is labelled. Default `NULL`, which uses the `tz` attribute of
+#'   `met` when present, otherwise `"UTC"`. Pass a fixed-offset zone such as
+#'   `"Etc/GMT-12"` (NZST) to place the peak at local solar noon.
 #' @param timestep `"hour"` (default) or `"3hour"`.
 #' @param interval what a timestamp denotes: `"ending"` (default) means the
 #'   value is the mean over the interval *ending* at that label, which is
@@ -147,7 +148,7 @@ clear_sky_swr <- function(datetime, lat, lon, cloud = 0) {
 #' head(hr)
 #' @export
 estimate_hourly_swr <- function(met, lat, lon,
-                                tz = "Etc/GMT-12",
+                                tz = NULL,
                                 timestep = c("hour", "3hour"),
                                 interval = c("ending", "beginning", "instant"),
                                 cloud = 0) {
@@ -155,6 +156,7 @@ estimate_hourly_swr <- function(met, lat, lon,
   interval <- match.arg(interval)
   stopifnot(is.data.frame(met), "Date" %in% names(met),
             "MET_radswd" %in% names(met), is.numeric(lat), is.numeric(lon))
+  tz <- .tz_or_utc(tz, attr(met, "tz"))
 
   step_h <- if (timestep == "hour") 1 else 3
   n_sub  <- 24 / step_h

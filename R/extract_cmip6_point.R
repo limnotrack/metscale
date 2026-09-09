@@ -208,7 +208,7 @@
 #'   `"366_day"`, `"standard"`. A `365_day` / `360_day` series is mapped onto
 #'   real dates, so it has no 29 February (and, for `360_day`, no 31st).
 #' @param tz time zone recorded on the result; the series is daily and
-#'   carries no time of day. Default `"Etc/GMT-12"`.
+#'   carries no time of day. Default `"UTC"`.
 #' @param verbose print each file as it is read.
 #'
 #' @return a data frame with `Date` (class `Date`), `experiment` (character)
@@ -234,7 +234,7 @@ extract_cmip6_point <- function(path, lon, lat,
                                 method = c("bilinear", "nearest"),
                                 calendar = c("auto", "365_day", "360_day",
                                              "366_day", "standard"),
-                                tz = "Etc/GMT-12",
+                                tz = "UTC",
                                 verbose = TRUE) {
 
   method   <- match.arg(method)

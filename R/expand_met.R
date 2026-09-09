@@ -2,9 +2,10 @@
 ## Expand a minimal meteorological set to the full set lake models need.
 ##
 ## Ported from AEME::expand_met(). Behaviour differences, all deliberate:
-##   * `tz` is explicit and is passed to calc_cc(), so cloud cover is
-##     inferred against a correctly phased solar curve for local-time input.
-##     AEME forces the session timezone to UTC and reads the wall clock.
+##   * `tz` is explicit (defaulting to the frame's `tz` attribute, else
+##     UTC) and is passed to calc_cc(), so cloud cover is inferred against
+##     a correctly phased solar curve for local-time input. AEME forces the
+##     session timezone to UTC and reads the wall clock.
 ##   * `MET_prsttn` / `MET_prmslp` are returned in Pa. AEME's
 ##     `estimate_station_pressure()` returned hPa although `MET_prsttn` is
 ##     documented as Pa, so a met set expanded without a supplied pressure
@@ -44,8 +45,8 @@
 #' @param lat,lon lake position, decimal degrees.
 #' @param elev lake surface elevation, m above sea level.
 #' @param tz timezone the timestamps refer to, used for the solar geometry
-#'   in [calc_cc()]. Default `"Etc/GMT-12"` (fixed NZST). Ignored when
-#'   `MET_cldcvr` is supplied.
+#'   in [calc_cc()]. Default `NULL`, which uses the `tz` attribute of `met`
+#'   when present, otherwise `"UTC"`. Ignored when `MET_cldcvr` is supplied.
 #' @param round_to decimal places for the returned values, or `NULL` to
 #'   leave unrounded.
 #'
@@ -63,10 +64,11 @@
 #'                   MET_pprain = c(0, 12, 0, 25, 0))
 #' expand_met(met, lat = -38.08, lon = 176.27, elev = 280)
 #' @export
-expand_met <- function(met, lat, lon, elev = 0, tz = "Etc/GMT-12",
+expand_met <- function(met, lat, lon, elev = 0, tz = NULL,
                        round_to = 3) {
 
   stopifnot(is.data.frame(met), "Date" %in% names(met))
+  tz <- .tz_or_utc(tz, attr(met, "tz"))
   Date <- met$Date
   n <- nrow(met)
 

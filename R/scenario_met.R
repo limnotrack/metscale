@@ -60,7 +60,7 @@ NULL
 #' @param lat,lon,elev lake position; taken from the attributes of `era5`
 #'   when `NULL`.
 #' @param tz timezone for day boundaries and solar geometry; defaults to
-#'   the `tz` attribute of `era5`.
+#'   the `tz` attribute of `era5`, else `"UTC"`.
 #' @param expand regenerate the dependent variables with [expand_met()]
 #'   (default `TRUE`).
 #' @param min_frac minimum fraction of a day that must be present for that
@@ -93,7 +93,7 @@ bias_correct_daily_baseline <- function(era5, bc = NULL,
                                         min_frac = 0.5, verbose = TRUE) {
   stopifnot(is.data.frame(era5), "Date" %in% names(era5))
   say <- function(...) if (isTRUE(verbose)) message(...)
-  tz  <- tz  %||% attr(era5, "tz") %||% "Etc/GMT-12"
+  tz  <- .tz_or_utc(tz, attr(era5, "tz"))
   lat <- lat %||% attr(era5, "lat")
   lon <- lon %||% attr(era5, "lon")
 

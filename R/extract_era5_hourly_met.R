@@ -80,10 +80,11 @@
 #'   standard meteorological forcing variables.
 #' @param method  `"nearest"`, `"bilinear"` (default), `"area"` or
 #'   `"area_mean"` - see Details.
-#' @param tz      output time zone. Default `"Etc/GMT-12"` = fixed NZST
-#'   (UTC+12, no daylight saving) which keeps a gap-free regular hourly
-#'   series. Use `"Pacific/Auckland"` for civil NZ time (a duplicated hour
-#'   every April, a missing hour every September).
+#' @param tz      output time zone, applied to the native-UTC ERA5 time
+#'   stamps. Default `"UTC"` (no shift). Pass a fixed-offset zone such as
+#'   `"Etc/GMT-12"` (NZST) to keep a gap-free regular hourly series in
+#'   local time, or `"Pacific/Auckland"` for civil NZ time (a duplicated
+#'   hour every April, a missing hour every September).
 #' @param format  `"AEME"` (default, `MET_*` names), `"LER"` (LakeEnsemblR
 #'   names) or `"raw"` (ERA5 short names).
 #' @param precip_units `"mm/hr"` (default), `"m/day"`, `"mm/day"` or
@@ -95,6 +96,8 @@
 #' @param fill_gaps reindex onto a complete regular hourly sequence
 #'   (missing steps become `NA`). Default `TRUE`.
 #' @param verbose print progress messages.
+#' @param digits  significant digits for the output dataframe (default `6`). 
+#' Set to `NULL` to keep the full precision of the ERA5 data.
 #'
 #' @return a data frame: a time column (`Date` for AEME, else `datetime`;
 #'   POSIXct in `tz`) plus one column per variable in the chosen naming
@@ -133,7 +136,7 @@ extract_era5_hourly_met <- function(path,
                                                   "surface_pressure"),
                                     method = c("bilinear", "nearest",
                                                "area", "area_mean"),
-                                    tz = "Etc/GMT-12",
+                                    tz = "UTC",
                                     format = c("AEME", "LER", "raw"),
                                     precip_units = c("mm/hr", "m/day",
                                                      "mm/day", "m/hr"),
@@ -143,7 +146,9 @@ extract_era5_hourly_met <- function(path,
                                     area_crs = 2193,
                                     outfile = NULL,
                                     fill_gaps = TRUE,
-                                    verbose = TRUE) {
+                                    verbose = TRUE,
+                                    digits = 6
+                                    ) {
 
   method         <- match.arg(method)
   format         <- match.arg(format)
@@ -375,6 +380,12 @@ extract_era5_hourly_met <- function(path,
     w <- out; w[[time_col]] <- format(w[[time_col]], "%Y-%m-%d %H:%M:%S")
     utils::write.csv(w, outfile, row.names = FALSE)
     say("Wrote ", nrow(w), " rows x ", ncol(w), " cols to ", outfile)
+  }
+  
+  if (!is.null(digits)) {
+    for (v in names(out)[-1]) {
+      if (is.numeric(out[[v]])) out[[v]] <- signif(out[[v]], digits)
+    }
   }
 
   attr(out, "lon") <- lon; attr(out, "lat") <- lat

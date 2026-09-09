@@ -23,7 +23,7 @@
 #'   (taken from `attr(era5, "lat")` / `"lon"` when `NULL`).
 #' @param lat,lon,elev lake position for `expand`.
 #' @param tz timezone for the solar geometry in [expand_met()]; defaults to
-#'   the `tz` attribute of `era5`, else `"Etc/GMT-12"`.
+#'   the `tz` attribute of `era5`, else `"UTC"`.
 #' @param verbose report which variables were corrected.
 #'
 #' @return `era5` with corrected columns (same class/attributes), plus
@@ -80,7 +80,7 @@ apply_met_bias_correction <- function(era5, bc,
   ## ---- regenerate the dependent variables ---------------------------
   lat  <- lat  %||% attr(era5, "lat")
   lon  <- lon  %||% attr(era5, "lon")
-  tz   <- tz   %||% attr(era5, "tz") %||% "Etc/GMT-12"
+  tz   <- .tz_or_utc(tz, attr(era5, "tz"))
   if (is.null(lat) || is.null(lon))
     stop("expand = TRUE needs 'lat'/'lon' (not found as attributes of 'era5').")
   if (is.null(elev)) { elev <- 0; say("elev not supplied - using 0 m for expand_met()") }
@@ -113,12 +113,12 @@ apply_met_bias_correction <- function(era5, bc,
 #'
 #' @param met data frame with `Date` (POSIXct) + `MET_*` columns.
 #' @param tz time zone used to assign calendar days (default: the `tz`
-#'   attribute of `met`, else `"Etc/GMT-12"`).
+#'   attribute of `met`, else `"UTC"`).
 #' @param min_frac drop days with less than this fraction of expected
 #'   hourly records (default 0.5); set 0 to keep all.
 #' @return daily data frame, `Date` first.
 #' @examples
-#' h <- data.frame(Date = seq(as.POSIXct("2024-01-01", tz = "Etc/GMT-12"),
+#' h <- data.frame(Date = seq(as.POSIXct("2024-01-01", tz = "UTC"),
 #'                            by = "hour", length.out = 48),
 #'                 MET_tmpair = rnorm(48, 15), MET_pprain = 0.1)
 #' met_to_daily(h)
@@ -126,7 +126,7 @@ apply_met_bias_correction <- function(era5, bc,
 met_to_daily <- function(met, tz = NULL, min_frac = 0.5) {
   stopifnot(is.data.frame(met), "Date" %in% names(met))
   if (inherits(met$Date, "Date")) return(met)
-  tz <- tz %||% attr(met, "tz") %||% "Etc/GMT-12"
+  tz <- .tz_or_utc(tz, attr(met, "tz"))
   day <- as.Date(as.POSIXct(met$Date), tz = tz)
   vcols <- setdiff(names(met), "Date")
   sum_v <- intersect(c("MET_pprain", "MET_ppsnow"), vcols)
