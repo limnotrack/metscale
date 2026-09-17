@@ -81,7 +81,7 @@ message("  usable baseline: ", paste(range(as.integer(format(
 ## 3. CMIP6 projections -> delta-change factors
 ## ===========================================================================
 message("\n== 3. CMIP6 delta-change ==")
-cmip <- extract_cmip6_point(file.path(src, "rotorua_cmip6_full"),
+cmip <- extract_climate_point(file.path(src, "rotorua_cmip6_full"),
                             lon = LON, lat = LAT, vars = names(KIND),
                             verbose = FALSE)
 cmip_by <- split(cmip, cmip$experiment)

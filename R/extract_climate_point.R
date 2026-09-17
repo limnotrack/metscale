@@ -220,12 +220,12 @@
 #'
 #' @examples
 #' \dontrun{
-#' cmip <- extract_cmip6_point("inst/extdata/rotorua_cmip6",
+#' cmip <- extract_climate_point("inst/extdata/rotorua_cmip6",
 #'                             lon = 176.2717, lat = -38.0790)
 #' split(cmip, cmip$experiment) |> lapply(head, 2)
 #' }
 #' @export
-extract_cmip6_point <- function(path, lon, lat,
+extract_climate_point <- function(path, lon, lat,
                                 vars = c("MET_tmpair", "MET_pprain",
                                          "MET_wndspd", "MET_radswd",
                                          "MET_humrel", "MET_radlwd",

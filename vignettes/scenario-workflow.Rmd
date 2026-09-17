@@ -166,12 +166,12 @@ range(baseline$Date)
 
 ## 3. CMIP6 delta-change on the corrected baseline
 
-Read the model series at the lake with `extract_cmip6_point()` --- it decodes
+Read the model series at the lake with `extract_climate_point()` --- it decodes
 the 365-day model calendar, samples bilinearly, and returns AEME `MET_*`
 names and units.
 
 ```{r cmip-read}
-cmip <- extract_cmip6_point(file.path(ex, "rotorua_cmip6"),
+cmip <- extract_climate_point(file.path(ex, "rotorua_cmip6"),
                             lon = lon, lat = lat,
                             vars = c("MET_tmpair", "MET_pprain", "MET_wndspd",
                                      "MET_radswd", "MET_humrel"),

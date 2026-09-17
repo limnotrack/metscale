@@ -15,7 +15,7 @@
 #'             -> fit_met_bias_correction(era5, obs)
 #'             -> apply_met_bias_correction(full record)
 #'             -> met_to_daily()                      # corrected baseline
-#'             -> delta-change: extract_cmip6_point(), monthly change factors,
+#'             -> delta-change: extract_climate_point(), monthly change factors,
 #'                add / multiply onto the baseline
 #'             -> disaggregate_met_to_hourly()        # if sub-daily is needed
 #' }
@@ -39,7 +39,7 @@
 #'
 #' @name scenario_workflow
 #' @seealso [bias_correct_daily_baseline()], [fit_met_bias_correction()],
-#'   [extract_cmip6_point()], [disaggregate_met_to_hourly()]
+#'   [extract_climate_point()], [disaggregate_met_to_hourly()]
 NULL
 
 #' Build a bias-corrected daily baseline for a climate-scenario workflow

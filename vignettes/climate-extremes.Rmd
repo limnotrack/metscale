@@ -95,7 +95,7 @@ baseline  <- baseline[stats::complete.cases(
   baseline[c("MET_radswd", "MET_tmpair", "MET_pprain",
              "MET_wndspd", "MET_humrel")]), ]
 
-cmip <- extract_cmip6_point(file.path(ex, "rotorua_cmip6"), lon = lon, lat = lat,
+cmip <- extract_climate_point(file.path(ex, "rotorua_cmip6"), lon = lon, lat = lat,
                             vars = c("MET_tmpair", "MET_pprain", "MET_wndspd",
                                      "MET_radswd", "MET_humrel"),
                             verbose = FALSE)

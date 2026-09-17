@@ -55,7 +55,7 @@ defects fixed (time-zone handling in the solar geometry, `MET_prsttn` /
 
 ## Climate projections
 
-* `extract_cmip6_point()` -- daily CMIP6 / CCAM projections at a point,
+* `extract_climate_point()` -- daily CMIP6 / CCAM projections at a point,
   decoding the model calendar (`365_day`, `360_day`, `366_day`, standard)
   and returning AEME `MET_*` names and units. Feeds the delta-change step.
 

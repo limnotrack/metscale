@@ -16,7 +16,7 @@ ERA5 hourly -> extract_era5_lake_met()
             -> fit_met_bias_correction(era5, obs)
             -> apply_met_bias_correction(full record)
             -> met_to_daily()                      # corrected baseline
-            -> delta-change: extract_cmip6_point(), monthly change factors,
+            -> delta-change: extract_climate_point(), monthly change factors,
                add / multiply onto the baseline
             -> disaggregate_met_to_hourly()        # if sub-daily is needed
 }
@@ -40,5 +40,5 @@ outside its training range.
 }
 \seealso{
 \code{\link[=bias_correct_daily_baseline]{bias_correct_daily_baseline()}}, \code{\link[=fit_met_bias_correction]{fit_met_bias_correction()}},
-\code{\link[=extract_cmip6_point]{extract_cmip6_point()}}, \code{\link[=disaggregate_met_to_hourly]{disaggregate_met_to_hourly()}}
+\code{\link[=extract_climate_point]{extract_climate_point()}}, \code{\link[=disaggregate_met_to_hourly]{disaggregate_met_to_hourly()}}
 }

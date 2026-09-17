@@ -18,7 +18,7 @@
 ## ===========================================================================
 
 suppressWarnings(suppressMessages({
-  devtools::load_all(".", quiet = TRUE)   # for metscale:::.cmip6_time_to_date + extract_cmip6_point
+  devtools::load_all(".", quiet = TRUE)   # for metscale:::.cmip6_time_to_date + extract_climate_point
   library(ncdf4)
 }))
 
@@ -136,7 +136,7 @@ for (v in VARS) for (ex in EXPERIMENTS) {
 
 ## ---- 4. regression gate: point series unchanged by the crop --------------
 message("regression check (cropped vs full point series) ...")
-pull <- function(dir) extract_cmip6_point(dir, lon = LON, lat = LAT,
+pull <- function(dir) extract_climate_point(dir, lon = LON, lat = LAT,
                                           experiments = EXPERIMENTS,
                                           verbose = FALSE)
 a <- pull(src_nc)

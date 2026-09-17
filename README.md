@@ -28,7 +28,7 @@ does not require it.
 | Fit a bias correction ERA5 -> observations (monthly scaling, variance scaling, regression, empirical / trend-preserving quantile mapping) with leave-one-year-out cross-validation | `fit_met_bias_correction()` |
 | Apply it to the full record and aggregate to daily | `apply_met_bias_correction()`, `met_to_daily()` |
 | Build a bias-corrected daily baseline for a climate-scenario (delta-change) workflow | `bias_correct_daily_baseline()`, `?scenario_workflow` |
-| Read daily CMIP6 / CCAM projections at a point (model-calendar aware) for the delta-change step | `extract_cmip6_point()` |
+| Read daily CMIP6 / CCAM projections at a point (model-calendar aware) for the delta-change step | `extract_climate_point()` |
 | Disaggregate daily meteorology to hourly / 3-hourly (method of fragments or mean diurnal cycle) | `disaggregate_met_to_hourly()`, `build_diurnal_climatology()` |
 | Fill a minimal met set out to everything a lake model needs | `expand_met()` |
 | Solar geometry, clear-sky shortwave, hourly shortwave from daily | `solar_zenith_angle()`, `clear_sky_swr()`, `estimate_hourly_swr()` |
@@ -98,7 +98,7 @@ corrected <- apply_met_bias_correction(era5, bc)
 daily     <- met_to_daily(corrected)
 
 ## 2. daily CMIP6 projections at the lake (input to the delta-change baseline)
-cmip <- extract_cmip6_point(file.path(ex, "rotorua_cmip6"),
+cmip <- extract_climate_point(file.path(ex, "rotorua_cmip6"),
                             lon = 176.2717, lat = -38.0790)
 
 ## 3. disaggregate a daily series back to hourly for a sub-daily model
