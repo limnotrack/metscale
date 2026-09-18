@@ -256,11 +256,11 @@ sub-daily shape of each series intact.
 <h2 id="cmip6-delta-change-on-the-corrected-baseline">3. CMIP6 delta-change on the corrected baseline<a class="anchor" aria-label="anchor" href="#cmip6-delta-change-on-the-corrected-baseline"></a>
 </h2>
 <p>Read the model series at the lake with
-<code><a href="../reference/extract_cmip6_point.html">extract_cmip6_point()</a></code> — it decodes the 365-day model
+<code><a href="../reference/extract_climate_point.html">extract_climate_point()</a></code> — it decodes the 365-day model
 calendar, samples bilinearly, and returns AEME <code>MET_*</code> names
 and units.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">cmip</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extract_cmip6_point.html">extract_cmip6_point</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ex</span>, <span class="st">"rotorua_cmip6"</span><span class="op">)</span>,</span>
+<code class="sourceCode R"><span><span class="va">cmip</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/extract_climate_point.html">extract_climate_point</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ex</span>, <span class="st">"rotorua_cmip6"</span><span class="op">)</span>,</span>
 <span>                            lon <span class="op">=</span> <span class="va">lon</span>, lat <span class="op">=</span> <span class="va">lat</span>,</span>
 <span>                            vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"MET_tmpair"</span>, <span class="st">"MET_pprain"</span>, <span class="st">"MET_wndspd"</span>,</span>
 <span>                                     <span class="st">"MET_radswd"</span>, <span class="st">"MET_humrel"</span><span class="op">)</span>,</span>
@@ -269,26 +269,98 @@ and units.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="va">cmip_by</span>, <span class="va">nrow</span>, <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; historical     ssp245     ssp585 </span></span>
 <span><span class="co">#&gt;       3650       3650       3650</span></span></code></pre></div>
+<div class="section level3">
+<h3 id="calendars-real-dates-from-a-model-calendar">Calendars: real dates from a model calendar<a class="anchor" aria-label="anchor" href="#calendars-real-dates-from-a-model-calendar"></a>
+</h3>
+<p>Climate models don’t all keep the civil (Gregorian) calendar. NIWA’s
+CCAM downscaling carries whatever calendar its driving CMIP6 model uses,
+and that varies by model: <code>NorESM2-MM</code> — bundled here — runs
+<code>365_day</code> (no leap days, ever); NZESM, NIWA’s other
+commonly-used downscaled model, runs <code>360_day</code> (twelve
+uniform 30-day months). <code><a href="../reference/extract_climate_point.html">extract_climate_point()</a></code> reads each
+file’s own CF <code>calendar</code> attribute
+(<code>calendar = "auto"</code>, the default) rather than assuming
+Gregorian, and decodes accordingly:</p>
+<ul>
+<li>
+<strong><code>standard</code> / <code>gregorian</code> /
+<code>proleptic_gregorian</code> / <code>julian</code></strong> — the
+real civil calendar; decoded directly.</li>
+<li>
+<strong><code>365_day</code> / <code>noleap</code>,
+<code>360_day</code>, <code>366_day</code> /
+<code>all_leap</code></strong> — fixed-length calendars with no notion
+of leap years. Model days are mapped onto real <code>Date</code>s, and
+any day the civil calendar doesn’t have (29 February in a
+<code>365_day</code> series, 30 February or a 31st month-end in
+<code>360_day</code>) is clamped onto the last real day of that month,
+so the resulting series stays gap-free and month-aligned instead of
+landing on a <code>Date</code> that doesn’t exist.</li>
+</ul>
+<p>Because <code>NorESM2-MM</code> is <code>365_day</code>, the bundled
+historical series simply skips every 29 February:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/any.html" class="external-link">any</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="va">cmip_by</span><span class="op">$</span><span class="va">historical</span><span class="op">$</span><span class="va">Date</span>, <span class="st">"%m-%d"</span><span class="op">)</span> <span class="op">==</span> <span class="st">"02-29"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] FALSE</span></span></code></pre></div>
+<p>A <code>360_day</code> calendar clamps <em>harder</em>: a non-leap
+real February has only 28 days but the model gives it 30, so three
+separate model-days (28th, 29th, 30th) all clamp onto the same real
+<code>2000-02-28</code>. Merging variables that each carry that
+duplicated date naively (<code>merge(..., by = "Date")</code>) would not
+just leave a gap, it would cartesian-multiply rows for that date across
+every merged variable. <code><a href="../reference/extract_climate_point.html">extract_climate_point()</a></code> collapses
+each variable’s duplicate dates (by mean) before merging across
+variables, specifically to avoid that.</p>
+<p>If two variables in the same experiment still don’t share full date
+coverage after merging — different calendars, different file lengths —
+the mismatch is not left as a silent <code>NA</code>: with
+<code>verbose = TRUE</code> a per-variable NA count is reported, and a
+<code><a href="https://rdrr.io/r/base/warning.html" class="external-link">warning()</a></code> is raised either way. Pass
+<code>strict = TRUE</code> to turn that into a hard <code><a href="https://rdrr.io/r/base/stop.html" class="external-link">stop()</a></code>
+instead, for pipelines that would rather fail loudly at extraction time
+than discover a gap several transform steps later. A missing or empty
+<code>calendar</code> attribute on a file
+(<code>calendar = "auto"</code>, unable to determine the actual
+calendar) also warns before falling back to <code>standard</code>, so
+that silent assumption is at least visible. See
+<code><a href="../reference/extract_climate_point.html">?extract_climate_point</a></code> for details.</p>
+<p>That merge-safe averaging is the right call for the <em>daily</em>
+series returned by <code><a href="../reference/extract_climate_point.html">extract_climate_point()</a></code>, but the
+delta-change step below only ever needs a <strong>monthly mean</strong>,
+and computing it from the merged daily series would inherit a small
+bias: the clamped days already got averaged into one row, so they’d
+count as <code>1/28</code>th of February instead of their true
+<code>3/30</code>ths. Use <a href="../reference/climate_point_monthly_climatology.html"><code>climate_point_monthly_climatology()</code></a>
+instead — it reads each variable’s own per-file series independently and
+averages by calendar month <em>before</em> any Date-based merge or
+clamp-collapse, so every model day counts equally regardless of a
+fixed-length calendar’s month-end clamping. <code>years</code> restricts
+it to a reference window directly, so there’s no need to filter by year
+afterwards.</p>
 <p>Change factors are formed per calendar month, future window vs model
 historical: <strong>additive</strong> for temperature and shortwave
 (degC, W m<sup>-2</sup>), <strong>multiplicative</strong> for the
 bounded/skewed fields (rainfall, wind, humidity).</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">REF_YEARS</span> <span class="op">&lt;-</span> <span class="fl">2005</span><span class="op">:</span><span class="fl">2014</span></span>
-<span><span class="va">FUT_YEARS</span> <span class="op">&lt;-</span> <span class="fl">2090</span><span class="op">:</span><span class="fl">2099</span></span>
-<span><span class="va">KIND</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>MET_tmpair <span class="op">=</span> <span class="st">"add"</span>,   MET_radswd <span class="op">=</span> <span class="st">"add"</span>,</span>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ref_years</span> <span class="op">&lt;-</span> <span class="fl">2005</span><span class="op">:</span><span class="fl">2014</span></span>
+<span><span class="va">fut_years</span> <span class="op">&lt;-</span> <span class="fl">2090</span><span class="op">:</span><span class="fl">2099</span></span>
+<span><span class="va">kind</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>MET_tmpair <span class="op">=</span> <span class="st">"add"</span>,   MET_radswd <span class="op">=</span> <span class="st">"add"</span>,</span>
 <span>          MET_pprain <span class="op">=</span> <span class="st">"ratio"</span>, MET_wndspd <span class="op">=</span> <span class="st">"ratio"</span>, MET_humrel <span class="op">=</span> <span class="st">"ratio"</span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">monthly_delta</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">fut</span>, <span class="va">hist</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">mh</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="va">hist</span><span class="op">$</span><span class="va">Date</span>, <span class="st">"%m"</span><span class="op">)</span><span class="op">)</span>; <span class="va">hy</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="va">hist</span><span class="op">$</span><span class="va">Date</span>, <span class="st">"%Y"</span><span class="op">)</span><span class="op">)</span></span>
-<span>  <span class="va">mf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="va">fut</span><span class="op">$</span><span class="va">Date</span>,  <span class="st">"%m"</span><span class="op">)</span><span class="op">)</span>; <span class="va">fy</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="va">fut</span><span class="op">$</span><span class="va">Date</span>,  <span class="st">"%Y"</span><span class="op">)</span><span class="op">)</span></span>
-<span>  <span class="va">kh</span> <span class="op">&lt;-</span> <span class="va">hy</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">REF_YEARS</span>; <span class="va">kf</span> <span class="op">&lt;-</span> <span class="va">fy</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">FUT_YEARS</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">KIND</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">v</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="va">a</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tapply.html" class="external-link">tapply</a></span><span class="op">(</span><span class="va">hist</span><span class="op">[[</span><span class="va">v</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="va">kh</span><span class="op">]</span>, <span class="va">mh</span><span class="op">[</span><span class="va">kh</span><span class="op">]</span>, <span class="va">mean</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span>    <span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tapply.html" class="external-link">tapply</a></span><span class="op">(</span><span class="va">fut</span><span class="op">[[</span><span class="va">v</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="va">kf</span><span class="op">]</span>,  <span class="va">mf</span><span class="op">[</span><span class="va">kf</span><span class="op">]</span>, <span class="va">mean</span>, na.rm <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span>    <span class="va">d</span> <span class="op">&lt;-</span> <span class="kw">if</span> <span class="op">(</span><span class="va">KIND</span><span class="op">[[</span><span class="va">v</span><span class="op">]</span><span class="op">]</span> <span class="op">==</span> <span class="st">"ratio"</span><span class="op">)</span> <span class="va">b</span> <span class="op">/</span> <span class="va">a</span> <span class="kw">else</span> <span class="va">b</span> <span class="op">-</span> <span class="va">a</span></span>
-<span>    <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="va">d</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">as.character</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">12</span><span class="op">)</span><span class="op">]</span><span class="op">)</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">12</span><span class="op">)</span></span>
-<span>  <span class="op">}</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">KIND</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">hist_clim</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/climate_point_monthly_climatology.html">climate_point_monthly_climatology</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ex</span>, <span class="st">"rotorua_cmip6"</span><span class="op">)</span>, lon <span class="op">=</span> <span class="va">lon</span>, lat <span class="op">=</span> <span class="va">lat</span>, vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">kind</span><span class="op">)</span>,</span>
+<span>  experiments <span class="op">=</span> <span class="st">"historical"</span>, years <span class="op">=</span> <span class="va">ref_years</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="va">fut_clim</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/climate_point_monthly_climatology.html">climate_point_monthly_climatology</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ex</span>, <span class="st">"rotorua_cmip6"</span><span class="op">)</span>, lon <span class="op">=</span> <span class="va">lon</span>, lat <span class="op">=</span> <span class="va">lat</span>, vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">kind</span><span class="op">)</span>,</span>
+<span>  experiments <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ssp245"</span>, <span class="st">"ssp585"</span><span class="op">)</span>, years <span class="op">=</span> <span class="va">fut_years</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">monthly_delta</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">fut</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">kind</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">v</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="va">a</span> <span class="op">&lt;-</span> <span class="va">hist_clim</span><span class="op">$</span><span class="va">value</span><span class="op">[</span><span class="va">hist_clim</span><span class="op">$</span><span class="va">variable</span> <span class="op">==</span> <span class="va">v</span><span class="op">]</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">hist_clim</span><span class="op">$</span><span class="va">month</span><span class="op">[</span><span class="va">hist_clim</span><span class="op">$</span><span class="va">variable</span> <span class="op">==</span> <span class="va">v</span><span class="op">]</span><span class="op">)</span><span class="op">]</span></span>
+<span>    <span class="va">b</span> <span class="op">&lt;-</span> <span class="va">fut</span><span class="op">$</span><span class="va">value</span><span class="op">[</span><span class="va">fut</span><span class="op">$</span><span class="va">variable</span> <span class="op">==</span> <span class="va">v</span><span class="op">]</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">fut</span><span class="op">$</span><span class="va">month</span><span class="op">[</span><span class="va">fut</span><span class="op">$</span><span class="va">variable</span> <span class="op">==</span> <span class="va">v</span><span class="op">]</span><span class="op">)</span><span class="op">]</span></span>
+<span>    <span class="va">d</span> <span class="op">&lt;-</span> <span class="kw">if</span> <span class="op">(</span><span class="va">kind</span><span class="op">[[</span><span class="va">v</span><span class="op">]</span><span class="op">]</span> <span class="op">==</span> <span class="st">"ratio"</span><span class="op">)</span> <span class="va">b</span> <span class="op">/</span> <span class="va">a</span> <span class="kw">else</span> <span class="va">b</span> <span class="op">-</span> <span class="va">a</span></span>
+<span>    <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="va">d</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">12</span><span class="op">)</span></span>
+<span>  <span class="op">}</span><span class="op">)</span> <span class="op">|&gt;</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">kind</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="va">apply_delta</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">base</span>, <span class="va">delta</span><span class="op">)</span> <span class="op">{</span></span>
@@ -296,7 +368,7 @@ bounded/skewed fields (rainfall, wind, humidity).</p>
 <span>  <span class="va">out</span> <span class="op">&lt;-</span> <span class="va">base</span></span>
 <span>  <span class="kw">for</span> <span class="op">(</span><span class="va">v</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">delta</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
 <span>    <span class="va">f</span> <span class="op">&lt;-</span> <span class="va">delta</span><span class="op">[[</span><span class="va">v</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="va">mo</span><span class="op">]</span></span>
-<span>    <span class="va">out</span><span class="op">[[</span><span class="va">v</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="kw">if</span> <span class="op">(</span><span class="va">KIND</span><span class="op">[[</span><span class="va">v</span><span class="op">]</span><span class="op">]</span> <span class="op">==</span> <span class="st">"ratio"</span><span class="op">)</span> <span class="va">out</span><span class="op">[[</span><span class="va">v</span><span class="op">]</span><span class="op">]</span> <span class="op">*</span> <span class="va">f</span> <span class="kw">else</span> <span class="va">out</span><span class="op">[[</span><span class="va">v</span><span class="op">]</span><span class="op">]</span> <span class="op">+</span> <span class="va">f</span></span>
+<span>    <span class="va">out</span><span class="op">[[</span><span class="va">v</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="kw">if</span> <span class="op">(</span><span class="va">kind</span><span class="op">[[</span><span class="va">v</span><span class="op">]</span><span class="op">]</span> <span class="op">==</span> <span class="st">"ratio"</span><span class="op">)</span> <span class="va">out</span><span class="op">[[</span><span class="va">v</span><span class="op">]</span><span class="op">]</span> <span class="op">*</span> <span class="va">f</span> <span class="kw">else</span> <span class="va">out</span><span class="op">[[</span><span class="va">v</span><span class="op">]</span><span class="op">]</span> <span class="op">+</span> <span class="va">f</span></span>
 <span>  <span class="op">}</span></span>
 <span>  <span class="va">out</span><span class="op">$</span><span class="va">MET_humrel</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">pmin</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">pmax</a></span><span class="op">(</span><span class="va">out</span><span class="op">$</span><span class="va">MET_humrel</span>, <span class="fl">0</span><span class="op">)</span>, <span class="fl">100</span><span class="op">)</span></span>
 <span>  <span class="kw">for</span> <span class="op">(</span><span class="va">v</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"MET_radswd"</span>, <span class="st">"MET_wndspd"</span>, <span class="st">"MET_pprain"</span><span class="op">)</span><span class="op">)</span></span>
@@ -307,12 +379,12 @@ bounded/skewed fields (rainfall, wind, humidity).</p>
 <span>             lat <span class="op">=</span> <span class="va">lat</span>, lon <span class="op">=</span> <span class="va">lon</span>, elev <span class="op">=</span> <span class="va">elev</span>, tz <span class="op">=</span> <span class="va">tz</span><span class="op">)</span></span>
 <span><span class="op">}</span></span>
 <span></span>
-<span><span class="va">deltas</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>ssp245 <span class="op">=</span> <span class="fu">monthly_delta</span><span class="op">(</span><span class="va">cmip_by</span><span class="op">$</span><span class="va">ssp245</span>, <span class="va">cmip_by</span><span class="op">$</span><span class="va">historical</span><span class="op">)</span>,</span>
-<span>               ssp585 <span class="op">=</span> <span class="fu">monthly_delta</span><span class="op">(</span><span class="va">cmip_by</span><span class="op">$</span><span class="va">ssp585</span>, <span class="va">cmip_by</span><span class="op">$</span><span class="va">historical</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">deltas</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>ssp245 <span class="op">=</span> <span class="fu">monthly_delta</span><span class="op">(</span><span class="va">fut_clim</span><span class="op">[</span><span class="va">fut_clim</span><span class="op">$</span><span class="va">experiment</span> <span class="op">==</span> <span class="st">"ssp245"</span>, <span class="op">]</span><span class="op">)</span>,</span>
+<span>               ssp585 <span class="op">=</span> <span class="fu">monthly_delta</span><span class="op">(</span><span class="va">fut_clim</span><span class="op">[</span><span class="va">fut_clim</span><span class="op">$</span><span class="va">experiment</span> <span class="op">==</span> <span class="st">"ssp585"</span>, <span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="va">deltas</span>, <span class="kw">function</span><span class="op">(</span><span class="va">d</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">d</span><span class="op">$</span><span class="va">MET_tmpair</span><span class="op">)</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span>   <span class="co"># annual-mean warming, degC</span></span>
 <span><span class="co">#&gt; ssp245 ssp585 </span></span>
 <span><span class="co">#&gt;   1.47   3.40</span></span></code></pre></div>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">dT</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  month    <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">12</span>, <span class="fl">2</span><span class="op">)</span>,</span>
 <span>  delta    <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">deltas</span><span class="op">$</span><span class="va">ssp245</span><span class="op">$</span><span class="va">MET_tmpair</span>, <span class="va">deltas</span><span class="op">$</span><span class="va">ssp585</span><span class="op">$</span><span class="va">MET_tmpair</span><span class="op">)</span>,</span>
@@ -334,9 +406,9 @@ every month. These twelve numbers are what <code>apply_delta()</code>
 adds to the corresponding months of the corrected daily baseline.
 </p>
 </div>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">proj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">deltas</span>, <span class="va">apply_delta</span>, base <span class="op">=</span> <span class="va">baseline</span><span class="op">)</span></span></code></pre></div>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">proj</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">deltas</span>, <span class="va">apply_delta</span>, base <span class="op">=</span> <span class="va">baseline</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">yr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="va">baseline</span><span class="op">$</span><span class="va">Date</span>, <span class="st">"%Y"</span><span class="op">)</span> <span class="op">==</span> <span class="st">"2024"</span></span>
 <span><span class="va">pf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>Date <span class="op">=</span> <span class="va">baseline</span><span class="op">$</span><span class="va">Date</span><span class="op">[</span><span class="va">yr</span><span class="op">]</span>,   tmpair <span class="op">=</span> <span class="va">baseline</span><span class="op">$</span><span class="va">MET_tmpair</span><span class="op">[</span><span class="va">yr</span><span class="op">]</span>,</span>
@@ -360,6 +432,7 @@ warped rather than simply shifted.
 </p>
 </div>
 </div>
+</div>
 <div class="section level2">
 <h2 id="disaggregate-the-projection-to-hourly">4. Disaggregate the projection to hourly<a class="anchor" aria-label="anchor" href="#disaggregate-the-projection-to-hourly"></a>
 </h2>
@@ -367,7 +440,7 @@ warped rather than simply shifted.
 shape of the corrected ERA5 record (method of fragments) and rebuilds
 shortwave from solar geometry. Daily means and rainfall totals are
 conserved.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">slice</span>  <span class="op">&lt;-</span> <span class="va">proj</span><span class="op">$</span><span class="va">ssp585</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="va">proj</span><span class="op">$</span><span class="va">ssp585</span><span class="op">$</span><span class="va">Date</span>, <span class="st">"%Y-%m"</span><span class="op">)</span> <span class="op">==</span> <span class="st">"2024-07"</span>, <span class="op">]</span></span>
 <span><span class="va">hourly</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/disaggregate_met_to_hourly.html">disaggregate_met_to_hourly</a></span><span class="op">(</span><span class="va">slice</span>, donor <span class="op">=</span> <span class="va">era5_corr</span>,</span>
 <span>                                     method <span class="op">=</span> <span class="st">"fragments"</span>, swr <span class="op">=</span> <span class="st">"clearsky"</span>,</span>
@@ -375,7 +448,7 @@ conserved.</p>
 <span>                                     seed <span class="op">=</span> <span class="fl">42</span>, expand <span class="op">=</span> <span class="cn">TRUE</span>, verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">hourly</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 744</span></span></code></pre></div>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">d3</span> <span class="op">&lt;-</span> <span class="va">hourly</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="va">hourly</span><span class="op">$</span><span class="va">Date</span>, <span class="st">"%Y-%m-%d"</span><span class="op">)</span> <span class="op">&lt;=</span> <span class="st">"2024-07-03"</span>, <span class="op">]</span></span>
 <span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>Date <span class="op">=</span> <span class="va">d3</span><span class="op">$</span><span class="va">Date</span>, value <span class="op">=</span> <span class="va">d3</span><span class="op">$</span><span class="va">MET_tmpair</span>, panel <span class="op">=</span> <span class="st">"air temperature (°C)"</span><span class="op">)</span>,</span>
@@ -398,7 +471,7 @@ and ends each day at zero.
 </div>
 <p>Zooming out to a full week shows what disaggregation does to each
 field and what it leaves alone.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co">## pick the wettest 7-day window of the month so the rain panel is not empty</span></span>
 <span><span class="va">roll7</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">slice</span><span class="op">)</span> <span class="op">-</span> <span class="fl">6</span><span class="op">)</span>,</span>
 <span>                <span class="kw">function</span><span class="op">(</span><span class="va">i</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">slice</span><span class="op">$</span><span class="va">MET_pprain</span><span class="op">[</span><span class="va">i</span><span class="op">:</span><span class="op">(</span><span class="va">i</span> <span class="op">+</span> <span class="fl">6</span><span class="op">)</span><span class="op">]</span><span class="op">)</span><span class="op">)</span></span>
@@ -454,7 +527,7 @@ while that day’s total (labelled, mm/day) is left unchanged.
 </div>
 <p>Conservation check — the hourly series re-aggregated to daily
 reproduces the projected daily input:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">back</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/met_to_daily.html">met_to_daily</a></span><span class="op">(</span><span class="va">hourly</span>, tz <span class="op">=</span> <span class="va">tz</span>, min_frac <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">m</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/match.html" class="external-link">match</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="va">back</span><span class="op">$</span><span class="va">Date</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="va">slice</span><span class="op">$</span><span class="va">Date</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
@@ -477,7 +550,7 @@ needs an hourly <em>donor</em> at the location for the within-day shape
 pipeline: use raw ERA5 aggregated to daily as the baseline, apply the
 same <code>deltas</code>, and disaggregate with raw ERA5 as the
 donor.</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">baseline_raw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/met_to_daily.html">met_to_daily</a></span><span class="op">(</span><span class="va">era5</span>, tz <span class="op">=</span> <span class="va">tz</span><span class="op">)</span></span>
 <span><span class="va">ok</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/complete.cases.html" class="external-link">complete.cases</a></span><span class="op">(</span><span class="va">baseline_raw</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"MET_radswd"</span>, <span class="st">"MET_tmpair"</span>, <span class="st">"MET_pprain"</span>,</span>
 <span>                                           <span class="st">"MET_wndspd"</span>, <span class="st">"MET_humrel"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
@@ -493,7 +566,7 @@ donor.</p>
 difference between the two hourly series is essentially the ERA5-Land
 local bias — here the roughly 3 °C winter cold bias in air temperature
 seen in Figure 1.</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cmp</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>Date <span class="op">=</span> <span class="va">hourly</span><span class="op">$</span><span class="va">Date</span>,     value <span class="op">=</span> <span class="va">hourly</span><span class="op">$</span><span class="va">MET_tmpair</span>,</span>
 <span>             forcing <span class="op">=</span> <span class="st">"obs-based"</span><span class="op">)</span>,</span>
@@ -610,7 +683,7 @@ overlapping cell for <code>"area"</code> / <code>"area_mean"</code>,
 each weighted by its share of the intersection. Cells masked out by
 ERA5-Land (sea, or the lake pixels themselves) are outlined in dashed
 blue and dropped, their weight spread over the rest.</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">lake</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ex</span>, <span class="st">"rotorua_lake_shape.rds"</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/plot_extract_grid.html">plot_extract_grid</a></span><span class="op">(</span><span class="va">grid_dir</span>, geom <span class="op">=</span> <span class="va">lake</span>, method <span class="op">=</span> <span class="st">"area"</span><span class="op">)</span></span></code></pre></div>

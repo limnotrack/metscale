@@ -13,7 +13,7 @@ delta. Correct the baseline instead, then apply the delta on top:
                 -> fit_met_bias_correction(era5, obs)
                 -> apply_met_bias_correction(full record)
                 -> met_to_daily()                      # corrected baseline
-                -> delta-change: extract_cmip6_point(), monthly change factors,
+                -> delta-change: extract_climate_point(), monthly change factors,
                    add / multiply onto the baseline
                 -> disaggregate_met_to_hourly()        # if sub-daily is needed
 
@@ -40,5 +40,5 @@ outside its training range.
 
 [`bias_correct_daily_baseline()`](http://limnotrack.com/metscale/reference/bias_correct_daily_baseline.md),
 [`fit_met_bias_correction()`](http://limnotrack.com/metscale/reference/fit_met_bias_correction.md),
-[`extract_cmip6_point()`](http://limnotrack.com/metscale/reference/extract_cmip6_point.md),
+[`extract_climate_point()`](http://limnotrack.com/metscale/reference/extract_climate_point.md),
 [`disaggregate_met_to_hourly()`](http://limnotrack.com/metscale/reference/disaggregate_met_to_hourly.md)

@@ -127,7 +127,7 @@
 </tr>
 <tr>
 <td>Read daily CMIP6 / CCAM projections at a point (model-calendar aware) for the delta-change step</td>
-<td><code><a href="reference/extract_cmip6_point.html">extract_cmip6_point()</a></code></td>
+<td><code><a href="reference/extract_climate_point.html">extract_climate_point()</a></code></td>
 </tr>
 <tr>
 <td>Disaggregate daily meteorology to hourly / 3-hourly (method of fragments or mean diurnal cycle)</td>
@@ -201,7 +201,7 @@
 <span><span class="va">daily</span>     <span class="op">&lt;-</span> <span class="fu"><a href="reference/met_to_daily.html">met_to_daily</a></span><span class="op">(</span><span class="va">corrected</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co">## 2. daily CMIP6 projections at the lake (input to the delta-change baseline)</span></span>
-<span><span class="va">cmip</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/extract_cmip6_point.html">extract_cmip6_point</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ex</span>, <span class="st">"rotorua_cmip6"</span><span class="op">)</span>,</span>
+<span><span class="va">cmip</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/extract_climate_point.html">extract_climate_point</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="va">ex</span>, <span class="st">"rotorua_cmip6"</span><span class="op">)</span>,</span>
 <span>                            lon <span class="op">=</span> <span class="fl">176.2717</span>, lat <span class="op">=</span> <span class="op">-</span><span class="fl">38.0790</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co">## 3. disaggregate a daily series back to hourly for a sub-daily model</span></span>

@@ -29,6 +29,9 @@
 - [`clear_sky_swr()`](http://limnotrack.com/metscale/reference/clear_sky_swr.md)
   : Clear-sky downwelling shortwave radiation
 
+- [`climate_point_monthly_climatology()`](http://limnotrack.com/metscale/reference/climate_point_monthly_climatology.md)
+  : Equal-weighted monthly climatology from CMIP6 / CCAM point files
+
 - [`convert_era5_netcdf()`](http://limnotrack.com/metscale/reference/convert_era5_netcdf.md)
   : Convert downloaded ERA5 files to a daily meteorology data frame
 
@@ -56,7 +59,7 @@
 - [`expand_met()`](http://limnotrack.com/metscale/reference/expand_met.md)
   : Expand a minimal meteorological set to a complete one
 
-- [`extract_cmip6_point()`](http://limnotrack.com/metscale/reference/extract_cmip6_point.md)
+- [`extract_climate_point()`](http://limnotrack.com/metscale/reference/extract_climate_point.md)
   : Extract daily CMIP6 / CCAM projection meteorology for a point
 
 - [`extract_era5_hourly_met()`](http://limnotrack.com/metscale/reference/extract_era5_hourly_met.md)

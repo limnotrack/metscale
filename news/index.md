@@ -74,7 +74,7 @@ and the u/v swap in
 
 ### Climate projections
 
-- [`extract_cmip6_point()`](http://limnotrack.com/metscale/reference/extract_cmip6_point.md)
+- [`extract_climate_point()`](http://limnotrack.com/metscale/reference/extract_climate_point.md)
   – daily CMIP6 / CCAM projections at a point, decoding the model
   calendar (`365_day`, `360_day`, `366_day`, standard) and returning
   AEME `MET_*` names and units. Feeds the delta-change step.

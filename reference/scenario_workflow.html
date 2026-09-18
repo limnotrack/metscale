@@ -67,7 +67,7 @@ ERA5 hourly -&gt; extract_era5_lake_met()
             -&gt; fit_met_bias_correction(era5, obs)
             -&gt; apply_met_bias_correction(full record)
             -&gt; met_to_daily()                      # corrected baseline
-            -&gt; delta-change: extract_cmip6_point(), monthly change factors,
+            -&gt; delta-change: extract_climate_point(), monthly change factors,
                add / multiply onto the baseline
             -&gt; disaggregate_met_to_hourly()        # if sub-daily is needed
 </code></pre></div>
@@ -90,7 +90,7 @@ outside its training range.</p>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p><code><a href="bias_correct_daily_baseline.html">bias_correct_daily_baseline()</a></code>, <code><a href="fit_met_bias_correction.html">fit_met_bias_correction()</a></code>,
-<code><a href="extract_cmip6_point.html">extract_cmip6_point()</a></code>, <code><a href="disaggregate_met_to_hourly.html">disaggregate_met_to_hourly()</a></code></p></div>
+<code><a href="extract_climate_point.html">extract_climate_point()</a></code>, <code><a href="disaggregate_met_to_hourly.html">disaggregate_met_to_hourly()</a></code></p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

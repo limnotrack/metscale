@@ -19,6 +19,7 @@
 <url><loc>http://limnotrack.com/metscale/reference/calc_in_lwr.html</loc></url>
 <url><loc>http://limnotrack.com/metscale/reference/cf_to_met.html</loc></url>
 <url><loc>http://limnotrack.com/metscale/reference/clear_sky_swr.html</loc></url>
+<url><loc>http://limnotrack.com/metscale/reference/climate_point_monthly_climatology.html</loc></url>
 <url><loc>http://limnotrack.com/metscale/reference/convert_era5_netcdf.html</loc></url>
 <url><loc>http://limnotrack.com/metscale/reference/dewpoint_to_rh.html</loc></url>
 <url><loc>http://limnotrack.com/metscale/reference/disaggregate_met_to_hourly.html</loc></url>
@@ -28,7 +29,7 @@
 <url><loc>http://limnotrack.com/metscale/reference/era5_ref_table.html</loc></url>
 <url><loc>http://limnotrack.com/metscale/reference/estimate_hourly_swr.html</loc></url>
 <url><loc>http://limnotrack.com/metscale/reference/expand_met.html</loc></url>
-<url><loc>http://limnotrack.com/metscale/reference/extract_cmip6_point.html</loc></url>
+<url><loc>http://limnotrack.com/metscale/reference/extract_climate_point.html</loc></url>
 <url><loc>http://limnotrack.com/metscale/reference/extract_era5_hourly_met.html</loc></url>
 <url><loc>http://limnotrack.com/metscale/reference/extract_era5_lake_met.html</loc></url>
 <url><loc>http://limnotrack.com/metscale/reference/fit_met_bias_correction.html</loc></url>

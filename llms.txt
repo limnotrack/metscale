@@ -20,7 +20,7 @@ but does not require it.
 | Fit a bias correction ERA5 -\> observations (monthly scaling, variance scaling, regression, empirical / trend-preserving quantile mapping) with leave-one-year-out cross-validation | [`fit_met_bias_correction()`](http://limnotrack.com/metscale/reference/fit_met_bias_correction.md) |
 | Apply it to the full record and aggregate to daily | [`apply_met_bias_correction()`](http://limnotrack.com/metscale/reference/apply_met_bias_correction.md), [`met_to_daily()`](http://limnotrack.com/metscale/reference/met_to_daily.md) |
 | Build a bias-corrected daily baseline for a climate-scenario (delta-change) workflow | [`bias_correct_daily_baseline()`](http://limnotrack.com/metscale/reference/bias_correct_daily_baseline.md), [`?scenario_workflow`](http://limnotrack.com/metscale/reference/scenario_workflow.md) |
-| Read daily CMIP6 / CCAM projections at a point (model-calendar aware) for the delta-change step | [`extract_cmip6_point()`](http://limnotrack.com/metscale/reference/extract_cmip6_point.md) |
+| Read daily CMIP6 / CCAM projections at a point (model-calendar aware) for the delta-change step | [`extract_climate_point()`](http://limnotrack.com/metscale/reference/extract_climate_point.md) |
 | Disaggregate daily meteorology to hourly / 3-hourly (method of fragments or mean diurnal cycle) | [`disaggregate_met_to_hourly()`](http://limnotrack.com/metscale/reference/disaggregate_met_to_hourly.md), [`build_diurnal_climatology()`](http://limnotrack.com/metscale/reference/build_diurnal_climatology.md) |
 | Fill a minimal met set out to everything a lake model needs | [`expand_met()`](http://limnotrack.com/metscale/reference/expand_met.md) |
 | Solar geometry, clear-sky shortwave, hourly shortwave from daily | [`solar_zenith_angle()`](http://limnotrack.com/metscale/reference/solar_zenith_angle.md), [`clear_sky_swr()`](http://limnotrack.com/metscale/reference/clear_sky_swr.md), [`estimate_hourly_swr()`](http://limnotrack.com/metscale/reference/estimate_hourly_swr.md) |
@@ -104,7 +104,7 @@ corrected <- apply_met_bias_correction(era5, bc)
 daily     <- met_to_daily(corrected)
 
 ## 2. daily CMIP6 projections at the lake (input to the delta-change baseline)
-cmip <- extract_cmip6_point(file.path(ex, "rotorua_cmip6"),
+cmip <- extract_climate_point(file.path(ex, "rotorua_cmip6"),
                             lon = 176.2717, lat = -38.0790)
 
 ## 3. disaggregate a daily series back to hourly for a sub-daily model
@@ -158,6 +158,9 @@ pak::pak("limnotrack/metscale")
 - [`clear_sky_swr()`](http://limnotrack.com/metscale/reference/clear_sky_swr.md)
   : Clear-sky downwelling shortwave radiation
 
+- [`climate_point_monthly_climatology()`](http://limnotrack.com/metscale/reference/climate_point_monthly_climatology.md)
+  : Equal-weighted monthly climatology from CMIP6 / CCAM point files
+
 - [`convert_era5_netcdf()`](http://limnotrack.com/metscale/reference/convert_era5_netcdf.md)
   : Convert downloaded ERA5 files to a daily meteorology data frame
 
@@ -185,7 +188,7 @@ pak::pak("limnotrack/metscale")
 - [`expand_met()`](http://limnotrack.com/metscale/reference/expand_met.md)
   : Expand a minimal meteorological set to a complete one
 
-- [`extract_cmip6_point()`](http://limnotrack.com/metscale/reference/extract_cmip6_point.md)
+- [`extract_climate_point()`](http://limnotrack.com/metscale/reference/extract_climate_point.md)
   : Extract daily CMIP6 / CCAM projection meteorology for a point
 
 - [`extract_era5_hourly_met()`](http://limnotrack.com/metscale/reference/extract_era5_hourly_met.md)
