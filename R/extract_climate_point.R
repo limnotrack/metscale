@@ -49,6 +49,25 @@
     stringsAsFactors = FALSE)
 }
 
+#' Resolve `path`/`vars`/`experiments` to a file-info table + variable map
+#' @noRd
+.cmip6_resolve_files <- function(path, vars, experiments) {
+  files <- if (length(path) == 1L && dir.exists(path))
+    list.files(path, pattern = "\\.nc$", full.names = TRUE) else path
+  files <- files[file.exists(files)]
+  if (!length(files)) stop("no .nc files found at 'path'.", call. = FALSE)
+
+  map  <- .cmip6_var_map(vars)
+  info <- .cmip6_file_info(files)
+  info <- info[tolower(info$var) %in% names(map) & !is.na(info$experiment), ,
+               drop = FALSE]
+  if (!is.null(experiments))
+    info <- info[info$experiment %in% experiments, , drop = FALSE]
+  if (!nrow(info))
+    stop("no files matched the requested 'vars' / 'experiments'.", call. = FALSE)
+  list(map = map, info = info)
+}
+
 #' Decode a CF "<unit> since <origin>" time axis, honouring the model calendar
 #'
 #' `365_day`/`noleap`, `360_day` and `366_day`/`all_leap` use fixed month
@@ -162,7 +181,13 @@
   tu  <- ncdf4::ncatt_get(nc, time_name, "units")$value
   cal <- if (identical(calendar, "auto")) {
     a <- ncdf4::ncatt_get(nc, time_name, "calendar")$value
-    if (is.character(a) && nzchar(a)) a else "standard"
+    if (is.character(a) && nzchar(a)) {
+      a
+    } else {
+      warning(basename(f), ": no 'calendar' attribute found on '", time_name,
+              "', assuming standard/Gregorian.", call. = FALSE)
+      "standard"
+    }
   } else calendar
   dates <- .cmip6_time_to_date(tv, tu, cal)
 
@@ -209,6 +234,8 @@
 #'   real dates, so it has no 29 February (and, for `360_day`, no 31st).
 #' @param tz time zone recorded on the result; the series is daily and
 #'   carries no time of day. Default `"UTC"`.
+#' @param strict if `TRUE`, any `NA` introduced by merging variables with
+#'   mismatched date coverage raises an error instead of a warning/message.
 #' @param verbose print each file as it is read.
 #'
 #' @return a data frame with `Date` (class `Date`), `experiment` (character)
@@ -235,6 +262,7 @@ extract_climate_point <- function(path, lon, lat,
                                 calendar = c("auto", "365_day", "360_day",
                                              "366_day", "standard"),
                                 tz = "UTC",
+                                strict = FALSE,
                                 verbose = TRUE) {
 
   method   <- match.arg(method)
@@ -245,19 +273,9 @@ extract_climate_point <- function(path, lon, lat,
             is.numeric(lon), is.numeric(lat))
   say <- function(...) if (isTRUE(verbose)) message(...)
 
-  files <- if (length(path) == 1L && dir.exists(path))
-    list.files(path, pattern = "\\.nc$", full.names = TRUE) else path
-  files <- files[file.exists(files)]
-  if (!length(files)) stop("no .nc files found at 'path'.", call. = FALSE)
-
-  map  <- .cmip6_var_map(vars)
-  info <- .cmip6_file_info(files)
-  info <- info[tolower(info$var) %in% names(map) & !is.na(info$experiment), ,
-               drop = FALSE]
-  if (!is.null(experiments))
-    info <- info[info$experiment %in% experiments, , drop = FALSE]
-  if (!nrow(info))
-    stop("no files matched the requested 'vars' / 'experiments'.", call. = FALSE)
+  rf   <- .cmip6_resolve_files(path, vars, experiments)
+  map  <- rf$map
+  info <- rf$info
 
   out <- lapply(unique(info$experiment), function(ex) {
     sub <- info[info$experiment == ex, , drop = FALSE]
@@ -265,11 +283,24 @@ extract_climate_point <- function(path, lon, lat,
     frames <- lapply(seq_len(nrow(sub)), function(i) {
       met <- unname(map[tolower(sub$var[i])])
       d <- .cmip6_read_file(sub$file[i], met, lon, lat, method, calendar)
+      ## a fixed-length calendar can map several model-days onto one real
+      ## Date (see the clamp in .cmip6_time_to_date); collapse those before
+      ## the cross-variable merge so duplicate keys don't cartesian-product
+      d <- stats::aggregate(value ~ Date, data = d, FUN = mean)
       say("  ", basename(sub$file[i]), " -> ", met, " (", nrow(d), " days)")
       stats::setNames(d, c("Date", met))
     })
     m <- Reduce(function(a, b) merge(a, b, by = "Date", all = TRUE), frames)
     m <- m[order(m$Date), , drop = FALSE]
+    for (nm in setdiff(names(m), "Date")) {
+      n_na <- sum(is.na(m[[nm]]))
+      if (n_na > 0) {
+        msg <- paste0(nm, ": ", n_na, " NA after merge (of ", nrow(m), " dates)")
+        if (isTRUE(strict)) stop(ex, ": ", msg, call. = FALSE)
+        say("  ", msg)
+        warning(ex, ": ", msg, call. = FALSE)
+      }
+    }
     data.frame(Date = m$Date, experiment = ex,
                m[setdiff(names(m), "Date")], check.names = FALSE,
                row.names = NULL)
@@ -281,5 +312,80 @@ extract_climate_point <- function(path, lon, lat,
   attr(res, "lat") <- lat
   attr(res, "method") <- method
   attr(res, "tz") <- tz
+  res
+}
+
+#' Equal-weighted monthly climatology from CMIP6 / CCAM point files
+#'
+#' Companion to [extract_climate_point()], for building the monthly
+#' delta-change factors of [scenario_workflow]. [extract_climate_point()]
+#' merges variables onto a shared `Date` and, to do that safely, averages
+#' together any model-days a fixed-length calendar's month-end clamp maps
+#' onto the same real date (see its documentation) - which very slightly
+#' down-weights those clamped days in a monthly mean taken from its output,
+#' since they then count as a single row instead of several. This function
+#' instead reads each variable's own per-file series independently and
+#' averages straight by calendar month, before any Date-based merge or
+#' clamp-collapse happens, so every model day counts equally regardless of
+#' how many (or how few) real dates it lands on.
+#'
+#' @inheritParams extract_climate_point
+#' @param years optional integer vector of calendar years (as decoded onto
+#'   real dates) to include, e.g. a historical or future reference window.
+#'   `NULL` (default) uses every year found.
+#' @param fun the averaging function applied per experiment/variable/month.
+#'   Default `mean`.
+#'
+#' @return a data frame with `experiment`, `variable` (AEME `MET_*` name),
+#'   `month` (integer `1:12`) and `value`.
+#'
+#' @seealso [extract_climate_point()], [scenario_workflow]
+#'
+#' @examples
+#' \dontrun{
+#' clim <- climate_point_monthly_climatology("inst/extdata/rotorua_cmip6",
+#'                                         lon = 176.2717, lat = -38.0790,
+#'                                         years = 2005:2014)
+#' }
+#' @export
+climate_point_monthly_climatology <- function(path, lon, lat,
+                                vars = c("MET_tmpair", "MET_pprain",
+                                         "MET_wndspd", "MET_radswd",
+                                         "MET_humrel", "MET_radlwd",
+                                         "MET_prsttn"),
+                                experiments = NULL,
+                                method = c("bilinear", "nearest"),
+                                calendar = c("auto", "365_day", "360_day",
+                                             "366_day", "standard"),
+                                years = NULL,
+                                fun = mean,
+                                verbose = TRUE) {
+
+  method   <- match.arg(method)
+  calendar <- match.arg(calendar)
+  if (!requireNamespace("ncdf4", quietly = TRUE))
+    stop("Package 'ncdf4' is required.", call. = FALSE)
+  stopifnot(length(lon) == 1L, length(lat) == 1L,
+            is.numeric(lon), is.numeric(lat))
+  say <- function(...) if (isTRUE(verbose)) message(...)
+
+  rf   <- .cmip6_resolve_files(path, vars, experiments)
+  map  <- rf$map
+  info <- rf$info
+
+  out <- lapply(seq_len(nrow(info)), function(i) {
+    met <- unname(map[tolower(info$var[i])])
+    d <- .cmip6_read_file(info$file[i], met, lon, lat, method, calendar)
+    if (!is.null(years))
+      d <- d[as.integer(format(d$Date, "%Y")) %in% years, , drop = FALSE]
+    say(basename(info$file[i]), " -> ", met, " (", nrow(d), " days)")
+    mo <- as.integer(format(d$Date, "%m"))
+    v  <- tapply(d$value, mo, fun)
+    data.frame(experiment = info$experiment[i], variable = met,
+               month = as.integer(names(v)), value = as.numeric(v))
+  })
+
+  res <- do.call(rbind, out)
+  rownames(res) <- NULL
   res
 }

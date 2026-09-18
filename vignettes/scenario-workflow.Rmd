@@ -180,26 +180,89 @@ cmip_by <- split(cmip, cmip$experiment)
 vapply(cmip_by, nrow, integer(1))
 ```
 
+### Calendars: real dates from a model calendar
+
+Climate models don't all keep the civil (Gregorian) calendar. NIWA's CCAM
+downscaling carries whatever calendar its driving CMIP6 model uses, and that
+varies by model: `NorESM2-MM` --- bundled here --- runs `365_day` (no leap
+days, ever); NZESM, NIWA's other commonly-used downscaled model, runs
+`360_day` (twelve uniform 30-day months). `extract_climate_point()` reads
+each file's own CF `calendar` attribute (`calendar = "auto"`, the default)
+rather than assuming Gregorian, and decodes accordingly:
+
+* **`standard` / `gregorian` / `proleptic_gregorian` / `julian`** --- the real
+  civil calendar; decoded directly.
+* **`365_day` / `noleap`, `360_day`, `366_day` / `all_leap`** --- fixed-length
+  calendars with no notion of leap years. Model days are mapped onto real
+  `Date`s, and any day the civil calendar doesn't have (29 February in a
+  `365_day` series, 30 February or a 31st month-end in `360_day`) is clamped
+  onto the last real day of that month, so the resulting series stays
+  gap-free and month-aligned instead of landing on a `Date` that doesn't
+  exist.
+
+Because `NorESM2-MM` is `365_day`, the bundled historical series simply skips
+every 29 February:
+
+```{r calendar-noleap}
+any(format(cmip_by$historical$Date, "%m-%d") == "02-29")
+```
+
+A `360_day` calendar clamps *harder*: a non-leap real February has only 28
+days but the model gives it 30, so three separate model-days (28th, 29th,
+30th) all clamp onto the same real `2000-02-28`. Merging variables that each
+carry that duplicated date naively (`merge(..., by = "Date")`) would not just
+leave a gap, it would cartesian-multiply rows for that date across every
+merged variable. `extract_climate_point()` collapses each variable's
+duplicate dates (by mean) before merging across variables, specifically to
+avoid that.
+
+If two variables in the same experiment still don't share full date coverage
+after merging --- different calendars, different file lengths --- the
+mismatch is not left as a silent `NA`: with `verbose = TRUE` a per-variable
+NA count is reported, and a `warning()` is raised either way. Pass
+`strict = TRUE` to turn that into a hard `stop()` instead, for pipelines that
+would rather fail loudly at extraction time than discover a gap several
+transform steps later. A missing or empty `calendar` attribute on a file
+(`calendar = "auto"`, unable to determine the actual calendar) also warns
+before falling back to `standard`, so that silent assumption is at least
+visible. See `?extract_climate_point` for details.
+
+That merge-safe averaging is the right call for the *daily* series returned
+by `extract_climate_point()`, but the delta-change step below only ever needs
+a **monthly mean**, and computing it from the merged daily series would
+inherit a small bias: the clamped days already got averaged into one row, so
+they'd count as `1/28`th of February instead of their true `3/30`ths. Use
+[`climate_point_monthly_climatology()`](../reference/climate_point_monthly_climatology.html)
+instead --- it reads each variable's own per-file series independently and
+averages by calendar month *before* any Date-based merge or clamp-collapse,
+so every model day counts equally regardless of a fixed-length calendar's
+month-end clamping. `years` restricts it to a reference window directly, so
+there's no need to filter by year afterwards.
+
 Change factors are formed per calendar month, future window vs model
 historical: **additive** for temperature and shortwave (degC, W m^-2^),
 **multiplicative** for the bounded/skewed fields (rainfall, wind, humidity).
 
 ```{r delta-fns}
-REF_YEARS <- 2005:2014
-FUT_YEARS <- 2090:2099
-KIND <- c(MET_tmpair = "add",   MET_radswd = "add",
+ref_years <- 2005:2014
+fut_years <- 2090:2099
+kind <- c(MET_tmpair = "add",   MET_radswd = "add",
           MET_pprain = "ratio", MET_wndspd = "ratio", MET_humrel = "ratio")
 
-monthly_delta <- function(fut, hist) {
-  mh <- as.integer(format(hist$Date, "%m")); hy <- as.integer(format(hist$Date, "%Y"))
-  mf <- as.integer(format(fut$Date,  "%m")); fy <- as.integer(format(fut$Date,  "%Y"))
-  kh <- hy %in% REF_YEARS; kf <- fy %in% FUT_YEARS
-  lapply(names(KIND), function(v) {
-    a <- tapply(hist[[v]][kh], mh[kh], mean, na.rm = TRUE)
-    b <- tapply(fut[[v]][kf],  mf[kf], mean, na.rm = TRUE)
-    d <- if (KIND[[v]] == "ratio") b / a else b - a
-    stats::setNames(as.numeric(d[as.character(1:12)]), 1:12)
-  }) |> stats::setNames(names(KIND))
+hist_clim <- climate_point_monthly_climatology(
+  file.path(ex, "rotorua_cmip6"), lon = lon, lat = lat, vars = names(kind),
+  experiments = "historical", years = ref_years, verbose = FALSE)
+fut_clim <- climate_point_monthly_climatology(
+  file.path(ex, "rotorua_cmip6"), lon = lon, lat = lat, vars = names(kind),
+  experiments = c("ssp245", "ssp585"), years = fut_years, verbose = FALSE)
+
+monthly_delta <- function(fut) {
+  lapply(names(kind), function(v) {
+    a <- hist_clim$value[hist_clim$variable == v][order(hist_clim$month[hist_clim$variable == v])]
+    b <- fut$value[fut$variable == v][order(fut$month[fut$variable == v])]
+    d <- if (kind[[v]] == "ratio") b / a else b - a
+    stats::setNames(d, 1:12)
+  }) |> stats::setNames(names(kind))
 }
 
 apply_delta <- function(base, delta) {
@@ -207,7 +270,7 @@ apply_delta <- function(base, delta) {
   out <- base
   for (v in names(delta)) {
     f <- delta[[v]][mo]
-    out[[v]] <- if (KIND[[v]] == "ratio") out[[v]] * f else out[[v]] + f
+    out[[v]] <- if (kind[[v]] == "ratio") out[[v]] * f else out[[v]] + f
   }
   out$MET_humrel <- pmin(pmax(out$MET_humrel, 0), 100)
   for (v in c("MET_radswd", "MET_wndspd", "MET_pprain"))
@@ -218,8 +281,8 @@ apply_delta <- function(base, delta) {
              lat = lat, lon = lon, elev = elev, tz = tz)
 }
 
-deltas <- list(ssp245 = monthly_delta(cmip_by$ssp245, cmip_by$historical),
-               ssp585 = monthly_delta(cmip_by$ssp585, cmip_by$historical))
+deltas <- list(ssp245 = monthly_delta(fut_clim[fut_clim$experiment == "ssp245", ]),
+               ssp585 = monthly_delta(fut_clim[fut_clim$experiment == "ssp585", ]))
 sapply(deltas, function(d) round(mean(d$MET_tmpair), 2))   # annual-mean warming, degC
 ```
 

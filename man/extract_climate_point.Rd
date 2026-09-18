@@ -14,6 +14,7 @@ extract_climate_point(
   method = c("bilinear", "nearest"),
   calendar = c("auto", "365_day", "360_day", "366_day", "standard"),
   tz = "UTC",
+  strict = FALSE,
   verbose = TRUE
 )
 }
@@ -41,6 +42,9 @@ real dates, so it has no 29 February (and, for \verb{360_day}, no 31st).}
 
 \item{tz}{time zone recorded on the result; the series is daily and
 carries no time of day. Default \code{"UTC"}.}
+
+\item{strict}{if \code{TRUE}, any \code{NA} introduced by merging variables with
+mismatched date coverage raises an error instead of a warning/message.}
 
 \item{verbose}{print each file as it is read.}
 }
