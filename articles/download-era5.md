@@ -42,11 +42,11 @@ met <- download_era5_isimip_point(lon, lat, years, vars)
 #> ✔ Job submitted in 1s | id=214bee8ef101706884cbc5691bc7f4b5fdac17d7 | status=finished
 #> ✔ Server finished preparing 4 files in 0s
 #> ℹ Downloading isimip-download-214bee8ef101706884cbc5691bc7f4b5fdac17d7.zip
-#> ✔ Downloaded 0.6 MB in 2s (0.4 MB/s)
-#> ℹ Extracting archive to /tmp/Rtmp7eVTpp/isimip-download-214bee8ef101706884cbc5691bc7f4b5fdac17d7
+#> ✔ Downloaded 0.6 MB in 1s (0.5 MB/s)
+#> ℹ Extracting archive to /tmp/RtmpnLOfMH/isimip-download-214bee8ef101706884cbc5691bc7f4b5fdac17d7
 #> ✔ Extracted 4 files in 0s
 #> ℹ Reading 2 variables from NetCDF files
-#> ℹ   tas: 2 files, 4018 records (0s)
+#> ℹ   tas: 2 files, 4018 records (1s)
 #> ℹ   pr: 2 files, 4018 records (0s)
 #> ✔ Read all variables in 1s
 #> ✔ Done: 4018 daily records for 2 variables (total 4s)
