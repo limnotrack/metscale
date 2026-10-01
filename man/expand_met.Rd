@@ -4,7 +4,7 @@
 \alias{expand_met}
 \title{Expand a minimal meteorological set to a complete one}
 \usage{
-expand_met(met, lat, lon, elev = 0, tz = NULL, round_to = 3)
+expand_met(met, lat, lon, elev = 0, tz = NULL, round_to = 6)
 }
 \arguments{
 \item{met}{data frame with a \code{Date} column (\code{Date} or POSIXct) and the

@@ -65,7 +65,7 @@
 #' expand_met(met, lat = -38.08, lon = 176.27, elev = 280)
 #' @export
 expand_met <- function(met, lat, lon, elev = 0, tz = NULL,
-                       round_to = 3) {
+                       round_to = 6) {
 
   stopifnot(is.data.frame(met), "Date" %in% names(met))
   tz <- .tz_or_utc(tz, attr(met, "tz"))
