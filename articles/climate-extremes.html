@@ -480,7 +480,7 @@ that a single run hides:</li>
 <span><span class="co">#&gt; min     12.74     10.44</span></span>
 <span><span class="co">#&gt; max     12.74     15.14</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">slice</span><span class="op">$</span><span class="va">MET_pprain</span><span class="op">)</span>   <span class="co"># daily totals are identical across every seed</span></span>
-<span><span class="co">#&gt; [1] 221.456</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 221.4543</span></span></code></pre></div>
 <p>The peak hourly wind of the month swings by several m s<sup>-1</sup>
 between seeds while every daily mean is held fixed. The peak hourly
 <em>rain</em> here barely moves, for a revealing reason: the donor
@@ -504,7 +504,7 @@ donor day had.</li>
 <span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">sapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"MET_tmpair"</span>, <span class="st">"MET_humrel"</span>, <span class="st">"MET_pprain"</span><span class="op">)</span>,</span>
 <span>       <span class="kw">function</span><span class="op">(</span><span class="va">v</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="va">back</span><span class="op">[[</span><span class="va">v</span><span class="op">]</span><span class="op">]</span> <span class="op">-</span> <span class="va">slice</span><span class="op">[[</span><span class="va">v</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="va">i</span><span class="op">]</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   MET_tmpair   MET_humrel   MET_pprain </span></span>
-<span><span class="co">#&gt; 0.0004166667 0.0004583333 0.0030000000</span></span></code></pre></div>
+<span><span class="co">#&gt; 4.166667e-07 4.583333e-07 2.000000e-06</span></span></code></pre></div>
 <p>Wind speed is the exception: it is conserved to the daily
 <em>vector</em> mean, not the scalar mean speed that
 <code><a href="../reference/met_to_daily.html">met_to_daily()</a></code> reports, so the two differ by the within-day
@@ -532,7 +532,7 @@ you expect. Cheap checks:</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>donor   <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">era5_corr</span><span class="op">$</span><span class="va">MET_pprain</span> <span class="op">&gt;</span> <span class="fl">0.1</span><span class="op">)</span>,</span>
 <span>  project <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/mean.html" class="external-link">mean</a></span><span class="op">(</span><span class="va">story_hr</span><span class="op">$</span><span class="va">MET_pprain</span> <span class="op">&gt;</span> <span class="fl">0.1</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt;     donor   project </span></span>
-<span><span class="co">#&gt; 0.1889323 0.2738095</span></span></code></pre></div>
+<span><span class="co">#&gt; 0.1893880 0.2619048</span></span></code></pre></div>
 <p>Useful diagnostics, roughly in order of effort: annual-block maxima
 of daily rain and daily-mean wind; empirical return periods (rank the
 values, plot value against <code>(n + 1) / rank / years</code>); wet-day

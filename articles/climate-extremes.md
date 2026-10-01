@@ -449,7 +449,7 @@ round(rbind(min = apply(peak, 2, min), max = apply(peak, 2, max)), 2)
 #> min     12.74     10.44
 #> max     12.74     15.14
 sum(slice$MET_pprain)   # daily totals are identical across every seed
-#> [1] 221.456
+#> [1] 221.4543
 ```
 
 The peak hourly wind of the month swings by several m s⁻¹ between seeds
@@ -474,7 +474,7 @@ i    <- match(as.Date(back$Date), as.Date(slice$Date))
 sapply(c("MET_tmpair", "MET_humrel", "MET_pprain"),
        function(v) max(abs(back[[v]] - slice[[v]][i])))
 #>   MET_tmpair   MET_humrel   MET_pprain 
-#> 0.0004166667 0.0004583333 0.0030000000
+#> 4.166667e-07 4.583333e-07 2.000000e-06
 ```
 
 Wind speed is the exception: it is conserved to the daily *vector* mean,
@@ -506,7 +506,7 @@ rbind(historical = summary(annual_max(cmip_by$historical, "MET_pprain")),
 c(donor   = mean(era5_corr$MET_pprain > 0.1),
   project = mean(story_hr$MET_pprain > 0.1))
 #>     donor   project 
-#> 0.1889323 0.2738095
+#> 0.1893880 0.2619048
 ```
 
 Useful diagnostics, roughly in order of effort: annual-block maxima of

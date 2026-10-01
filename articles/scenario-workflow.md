@@ -530,9 +530,9 @@ data.frame(
                                function(v) max(abs(back[[v]] - slice[[v]][m])))
 )
 #>              variable max_abs_daily_error
-#> MET_tmpair MET_tmpair        0.0004166667
-#> MET_humrel MET_humrel        0.0004166667
-#> MET_pprain MET_pprain        0.0030000000
+#> MET_tmpair MET_tmpair        4.583333e-07
+#> MET_humrel MET_humrel        4.583333e-07
+#> MET_pprain MET_pprain        2.000000e-06
 ```
 
 ## Without local observations
