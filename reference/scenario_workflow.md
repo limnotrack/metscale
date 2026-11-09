@@ -36,8 +36,16 @@ a future climate. Prefer `method = "scale"` over quantile mapping for a
 baseline that will be projected, since a fitted CDF extrapolates poorly
 outside its training range.
 
+To drive a lake from the climate model's *own* daily series (its own
+weather and extremes) rather than a delta-shifted baseline, use
+[`qdm_gcm_met()`](http://limnotrack.com/metscale/reference/qdm_gcm_met.md):
+trend-preserving quantile delta mapping of the model onto the same
+corrected baseline over a common reference period. It needs a baseline
+overlapping the model's `historical` run by roughly 15 years or more.
+
 ## See also
 
+[`qdm_gcm_met()`](http://limnotrack.com/metscale/reference/qdm_gcm_met.md),
 [`bias_correct_daily_baseline()`](http://limnotrack.com/metscale/reference/bias_correct_daily_baseline.md),
 [`fit_met_bias_correction()`](http://limnotrack.com/metscale/reference/fit_met_bias_correction.md),
 [`extract_climate_point()`](http://limnotrack.com/metscale/reference/extract_climate_point.md),

@@ -44,6 +44,7 @@
 <url><loc>http://limnotrack.com/metscale/reference/plot_era5.html</loc></url>
 <url><loc>http://limnotrack.com/metscale/reference/plot_extract_grid.html</loc></url>
 <url><loc>http://limnotrack.com/metscale/reference/prepare_obs_met.html</loc></url>
+<url><loc>http://limnotrack.com/metscale/reference/qdm_gcm_met.html</loc></url>
 <url><loc>http://limnotrack.com/metscale/reference/read_era5_grib_point.html</loc></url>
 <url><loc>http://limnotrack.com/metscale/reference/rh_to_dewpoint.html</loc></url>
 <url><loc>http://limnotrack.com/metscale/reference/scenario_workflow.html</loc></url>

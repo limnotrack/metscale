@@ -103,6 +103,13 @@ and the u/v swap in
   [`bias_correct_daily_baseline()`](http://limnotrack.com/metscale/reference/bias_correct_daily_baseline.md)
   – apply to the full record, aggregate to daily, and build the
   corrected baseline for a delta-change workflow.
+- [`qdm_gcm_met()`](http://limnotrack.com/metscale/reference/qdm_gcm_met.md)
+  – GCM-direct forcing: trend-preserving quantile delta mapping (Cannon
+  et al. 2015) of a climate model’s own daily series onto the corrected
+  baseline over a common reference period, with the quantile taken from
+  the model’s sliding future window so projected changes survive. Unlike
+  `fit_met_bias_correction(method = "qdm")`, which is a stationary ERA5
+  -\> observations correction.
 - [`?scenario_workflow`](http://limnotrack.com/metscale/reference/scenario_workflow.md)
   – why the local correction goes on the baseline, not the delta.
 

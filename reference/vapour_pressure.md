@@ -1,7 +1,7 @@
 # Actual vapour pressure
 
 Eqn. C2 of TVA (1972) as used in the DYRESM manual - the formulation
-[`AEME::expand_met()`](https://limnotrack.com/reference/expand_met.html)
+[`AEME::expand_met()`](https://limnotrack.com/AEME/reference/expand_met.html)
 uses for `MET_prvapr`.
 
 ## Usage

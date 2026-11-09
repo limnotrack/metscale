@@ -77,7 +77,7 @@ were fixed on the way across:
   [`ds2uv()`](http://limnotrack.com/metscale/reference/ds2uv.md) /
   [`uv2ds()`](http://limnotrack.com/metscale/reference/uv2ds.md) are
   mutual inverses using the meteorological “direction from” convention.
-  [`AEME::expand_met()`](https://limnotrack.com/reference/expand_met.html)
+  [`AEME::expand_met()`](https://limnotrack.com/AEME/reference/expand_met.html)
   swapped u and v when deriving components from speed and direction.
 
 ## Example
@@ -233,6 +233,10 @@ pak::pak("limnotrack/metscale")
 - [`prepare_obs_met()`](http://limnotrack.com/metscale/reference/prepare_obs_met.md)
   : Standardise a table of locally measured meteorology for bias
   correction
+
+- [`qdm_gcm_met()`](http://limnotrack.com/metscale/reference/qdm_gcm_met.md)
+  : Quantile delta mapping of a climate-model series onto a corrected
+  baseline
 
 - [`read_era5_grib_point()`](http://limnotrack.com/metscale/reference/read_era5_grib_point.md)
   : Read a point from an ERA5 GRIB file

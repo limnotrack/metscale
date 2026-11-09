@@ -2,7 +2,7 @@
 
 Rain/snow are summed, everything else averaged; `Date` is returned as
 class `Date`, which is what lake-model builders such as
-[`AEME::build_aeme()`](https://limnotrack.com/reference/build_aeme.html)
+[`AEME::build_aeme()`](https://limnotrack.com/AEME/reference/build_aeme.html)
 expect.
 
 ## Usage

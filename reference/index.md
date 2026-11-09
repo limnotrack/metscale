@@ -105,6 +105,10 @@
   : Standardise a table of locally measured meteorology for bias
   correction
 
+- [`qdm_gcm_met()`](http://limnotrack.com/metscale/reference/qdm_gcm_met.md)
+  : Quantile delta mapping of a climate-model series onto a corrected
+  baseline
+
 - [`read_era5_grib_point()`](http://limnotrack.com/metscale/reference/read_era5_grib_point.md)
   : Read a point from an ERA5 GRIB file
 

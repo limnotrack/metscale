@@ -77,7 +77,7 @@ were fixed on the way across:
   [`ds2uv()`](http://limnotrack.com/metscale/reference/ds2uv.md) /
   [`uv2ds()`](http://limnotrack.com/metscale/reference/uv2ds.md) are
   mutual inverses using the meteorological “direction from” convention.
-  [`AEME::expand_met()`](https://limnotrack.com/reference/expand_met.html)
+  [`AEME::expand_met()`](https://limnotrack.com/AEME/reference/expand_met.html)
   swapped u and v when deriving components from speed and direction.
 
 ## Example

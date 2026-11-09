@@ -1,7 +1,7 @@
 # Humidity variables using the GOTM bulk formulation
 
 Vectorised port of
-[`AEME::calc_humidity_vars()`](https://limnotrack.com/reference/calc_humidity_vars.html):
+[`AEME::calc_humidity_vars()`](https://limnotrack.com/AEME/reference/calc_humidity_vars.html):
 saturation and actual vapour pressure, specific humidities and moist air
 density, from any of four humidity inputs.
 

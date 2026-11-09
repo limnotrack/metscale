@@ -640,6 +640,46 @@ climates, not for the *absolute* meteorology at a point:
   the baseline first, shift second
   ([`?scenario_workflow`](http://limnotrack.com/metscale/reference/scenario_workflow.md)).
 
+### Driving from the model’s own series: `qdm_gcm_met()`
+
+When the model’s own weather sequence matters more than a real-calendar
+baseline — you want its storms and heatwaves, not the observed ones —
+[`qdm_gcm_met()`](http://limnotrack.com/metscale/reference/qdm_gcm_met.md)
+bias-corrects the daily model series against the corrected baseline of
+step 2 with trend-preserving quantile delta mapping. The model’s change
+at each quantile is kept while its reference-period distribution is
+forced onto the baseline’s. This is a different thing from
+`fit_met_bias_correction(method = "qdm")`, which is a stationary ERA5 to
+observations correction.
+
+The method needs the baseline and the model’s `historical` run to
+overlap for a reference period of at least about 15 years. The ERA5
+record bundled with this vignette spans under two years (late 2023 to
+2025), so the chunk below is shown but not run; with a full ERA5 record
+(e.g. 1995–2014 against the model’s historical run) it runs as written.
+
+``` r
+
+## baseline: bias_correct_daily_baseline() over a long ERA5 record
+qdm <- qdm_gcm_met(cmip, baseline, scenario = "ssp585",
+                   ref_years = 1995:2014, target_years = 2015:2099)
+
+## the result is daily MET_* only: regenerate dependents as in step 3
+qdm <- expand_met(cbind(qdm, MET_prsttn = mean(baseline$MET_prsttn, na.rm = TRUE)),
+                  lat = lat, lon = lon, elev = elev, tz = tz)
+```
+
+The mean signal should be close to the monthly delta-change; what
+differs is the sequence. Delta-change reuses the observed days, so its
+day-to-day variability and event timing are the baseline’s;
+[`qdm_gcm_met()`](http://limnotrack.com/metscale/reference/qdm_gcm_met.md)
+carries the model’s. It also inherits the model’s sequence on its own
+(365-day) calendar dates and its limitations — a coarse daily field, no
+sub-daily information, and drizzle that the `wet_threshold` argument
+removes — so it suits questions about extremes and variability better
+than a plain mean-climate shift
+([`vignette("climate-extremes")`](http://limnotrack.com/metscale/articles/climate-extremes.md)).
+
 ### Extremes and storm events
 
 Delta-change rescales the *observed* sequence — every projected day is a
