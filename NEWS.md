@@ -77,6 +77,12 @@ defects fixed (time-zone handling in the solar geometry, `MET_prsttn` /
 * `apply_met_bias_correction()`, `met_to_daily()`,
   `bias_correct_daily_baseline()` -- apply to the full record, aggregate to
   daily, and build the corrected baseline for a delta-change workflow.
+* `qdm_gcm_met()` -- GCM-direct forcing: trend-preserving quantile delta
+  mapping (Cannon et al. 2015) of a climate model's own daily series onto the
+  corrected baseline over a common reference period, with the quantile taken
+  from the model's sliding future window so projected changes survive. Unlike
+  `fit_met_bias_correction(method = "qdm")`, which is a stationary
+  ERA5 -> observations correction.
 * `?scenario_workflow` -- why the local correction goes on the baseline, not
   the delta.
 

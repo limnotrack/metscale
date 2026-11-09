@@ -37,8 +37,15 @@ fitted over a few years of observations is being asserted to hold under
 a future climate. Prefer \code{method = "scale"} over quantile mapping for a
 baseline that will be projected, since a fitted CDF extrapolates poorly
 outside its training range.
+
+To drive a lake from the climate model's \emph{own} daily series (its own
+weather and extremes) rather than a delta-shifted baseline, use
+\code{\link[=qdm_gcm_met]{qdm_gcm_met()}}: trend-preserving quantile delta mapping of the model onto
+the same corrected baseline over a common reference period. It needs a
+baseline overlapping the model's \code{historical} run by roughly 15 years or
+more.
 }
 \seealso{
-\code{\link[=bias_correct_daily_baseline]{bias_correct_daily_baseline()}}, \code{\link[=fit_met_bias_correction]{fit_met_bias_correction()}},
+\code{\link[=qdm_gcm_met]{qdm_gcm_met()}}, \code{\link[=bias_correct_daily_baseline]{bias_correct_daily_baseline()}}, \code{\link[=fit_met_bias_correction]{fit_met_bias_correction()}},
 \code{\link[=extract_climate_point]{extract_climate_point()}}, \code{\link[=disaggregate_met_to_hourly]{disaggregate_met_to_hourly()}}
 }
